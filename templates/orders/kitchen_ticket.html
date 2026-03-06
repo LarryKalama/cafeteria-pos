@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Ticket - Order #{{ order.order_number }}</title>
+    <style>
+        @media print {
+            body { margin: 0; padding: 10px; }
+            .no-print { display: none; }
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 80mm;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px dashed #000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .order-info {
+            margin-bottom: 15px;
+        }
+        
+        .order-info div {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .items {
+            border-top: 2px dashed #000;
+            padding-top: 10px;
+        }
+        
+        .item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f5f5f5;
+            border-left: 4px solid #000;
+        }
+        
+        .item-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .item-qty {
+            font-size: 24px;
+            font-weight: bold;
+            display: inline-block;
+            background: #000;
+            color: #fff;
+            padding: 5px 15px;
+            margin-right: 10px;
+        }
+        
+        .item-notes {
+            margin-top: 5px;
+            padding: 5px;
+            background: #ffffcc;
+            border-left: 3px solid #ff9800;
+        }
+        
+        .footer {
+            text-align: center;
+            border-top: 2px dashed #000;
+            padding-top: 10px;
+            margin-top: 20px;
+        }
+        
+        .print-btn {
+            margin: 20px auto;
+            display: block;
+            padding: 10px 30px;
+            background: #FFD700;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="no-print">
+        <button class="print-btn" onclick="window.print()">🖨️ Print Ticket</button>
+    </div>
+    
+    <div class="header">
+        <div style="font-size: 20px; font-weight: bold;">🍽️ CAFETERIA POS</div>
+        <div style="font-size: 16px;"> CAFEE </div>
+        <div class="title">KITCHEN TICKET</div>
+    </div>
+    
+    <div class="order-info">
+        <div><strong>ORDER #:</strong> {{ order.order_number }}</div>
+        <div><strong>TABLE:</strong> {{ order.table_number|default:"N/A" }}</div>
+        <div><strong>CUSTOMER:</strong> {{ order.customer_name|default:"Walk-in" }}</div>
+        <div><strong>WAITER:</strong> {{ order.waiter.get_full_name }}</div>
+        <div><strong>TIME:</strong> {{ order.created_at|date:"H:i" }}</div>
+    </div>
+    
+    <div class="items">
+        {% for item in order.items.all %}
+        <div class="item">
+            <div>
+                <span class="item-qty">{{ item.quantity }}x</span>
+                <span class="item-name">{{ item.menu_item.name }}</span>
+            </div>
+            {% if item.notes %}
+            <div class="item-notes">
+                <strong>⚠️ NOTES:</strong> {{ item.notes }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="footer">
+        <div style="font-size: 12px;">{{ order.created_at|date:"M d, Y - H:i:s" }}</div>
+        <div style="font-size: 14px; margin-top: 10px;">
+            <strong>TOTAL ITEMS: {{ order.items.count }}</strong>
+        </div>
+    </div>
+</body>
+</html>

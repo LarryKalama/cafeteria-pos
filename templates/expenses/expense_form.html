@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - CAFETERIA POS{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-white mb-0">
+            <i class="bi bi-plus-circle me-2"></i> {{ title }}
+        </h4>
+        <a href="{% url 'expenses:expense_list' %}" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left me-1"></i> Back to Expenses
+        </a>
+    </div>
+
+    {% if form.errors %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Please fix the errors below:</strong>
+        {{ form.errors.as_ul }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Expense Details</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-4">
+                    <!-- Category -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-dark">{{ form.category.label }}</label>
+                        {{ form.category }}
+                        <div class="invalid-feedback">{{ form.category.errors|join:", " }}</div>
+                        <small class="form-text text-muted">Select from predefined categories or leave blank</small>
+                    </div>
+
+                    <!-- Custom Category -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-dark">{{ form.custom_category.label }}</label>
+                        {{ form.custom_category }}
+                        <div class="invalid-feedback">{{ form.custom_category.errors|join:", " }}</div>
+                        <small class="form-text text-muted">Only fill if no suitable category exists (e.g. "Emergency Repair")</small>
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-dark">{{ form.amount.label }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text">KSh</span>
+                            {{ form.amount }}
+                        </div>
+                        <div class="invalid-feedback">{{ form.amount.errors|join:", " }}</div>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-dark">{{ form.date.label }}</label>
+                        {{ form.date }}
+                        <div class="invalid-feedback">{{ form.date.errors|join:", " }}</div>
+                    </div>
+
+                    <!-- Description / Notes -->
+                    <div class="col-12">
+                        <label class="form-label fw-semibold text-dark">{{ form.description.label }}</label>
+                        {{ form.description }}
+                        <div class="invalid-feedback">{{ form.description.errors|join:", " }}</div>
+                        <small class="form-text text-muted">Optional: supplier name, receipt number, purpose, notes</small>
+                    </div>
+                </div>
+
+                <div class="mt-5 d-flex gap-3">
+                    <button type="submit" class="btn btn-success btn-lg px-5">
+                        <i class="bi bi-save me-2"></i> Save Expense
+                    </button>
+                    <a href="{% url 'expenses:expense_list' %}" class="btn btn-outline-secondary btn-lg px-5">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle custom category visibility based on main category selection
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.querySelector('#id_category');
+    const customGroup = document.querySelector('#id_custom_category').closest('.col-md-6');
+
+    function toggleCustom() {
+        if (categorySelect && categorySelect.value) {
+            customGroup.style.display = 'none';
+            document.querySelector('#id_custom_category').removeAttribute('required');
+        } else {
+            customGroup.style.display = 'block';
+            document.querySelector('#id_custom_category').setAttribute('required', '');
+        }
+    }
+
+    if (categorySelect) {
+        toggleCustom();
+        categorySelect.addEventListener('change', toggleCustom);
+    }
+});
+</script>
+{% endblock %}

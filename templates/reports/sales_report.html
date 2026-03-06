@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales Analytics - CAFETERIA POS{% endblock %}
+{% block page_title %}Sales Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-white">
+            <i class="bi bi-graph-up"></i> Sales Analytics
+        </h4>
+        <div>
+            {% if user.role == 'SUPERADMIN' %}
+        <a href="{% url 'reports:waiter_performance' %}" class="btn btn-outline-warning">
+            <i class="bi bi-trophy"></i> Waiter Performance
+        </a>
+        {% endif %}
+        </div>
+    </div>
+
+    <!-- Period Selector & Generate Button -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label text-white">Period</label>
+                    <select name="period" class="form-select">
+                        <option value="today" {% if period == 'today' %}selected{% endif %}>Today</option>
+                        <option value="week" {% if period == 'week' %}selected{% endif %}>Last 7 Days</option>
+                        <option value="month" {% if period == 'month' or not period %}selected{% endif %}>Last 30 Days</option>
+                        <option value="this_month" {% if period == 'this_month' %}selected{% endif %}>This Month</option>
+                        <option value="custom" {% if period == 'custom' %}selected{% endif %}>Custom Range</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3" id="customDates" style="display: {% if period == 'custom' %}block{% else %}none{% endif %};">
+                    <label class="form-label text-white">Start Date</label>
+                    <input type="date" name="start" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
+                </div>
+
+                <div class="col-md-3" id="customDatesEnd" style="display: {% if period == 'custom' %}block{% else %}none{% endif %};">
+                    <label class="form-label text-white">End Date</label>
+                    <input type="date" name="end" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-warning w-100">
+                        <i class="bi bi-search"></i> Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card" style="--bg-start: #28a745; --bg-end: #20873a;">
+                <i class="bi bi-cash-stack fs-1 mb-2"></i>
+                <div class="value">KSH {{ total_sales|floatformat:0 }}</div>
+                <div class="label">Total Sales</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card" style="--bg-start: #D4AF37; --bg-end: #B8860B;">
+                <i class="bi bi-receipt fs-1 mb-2"></i>
+                <div class="value">{{ total_orders }}</div>
+                <div class="label">Total Orders</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card" style="--bg-start: #17a2b8; --bg-end: #138496;">
+                <i class="bi bi-graph-up-arrow fs-1 mb-2"></i>
+                <div class="value">KSH {{ average_order|floatformat:0 }}</div>
+                <div class="label">Average Order</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card" style="--bg-start: #6c757d; --bg-end: #495057;">
+                <i class="bi bi-calendar-range fs-1 mb-2"></i>
+                <div class="value">{{ start_date|date:"M d" }} - {{ end_date|date:"M d" }}</div>
+                <div class="label">Period</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Methods & Top Items -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5><i class="bi bi-pie-chart"></i> Payment Methods</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="paymentChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5><i class="bi bi-trophy"></i> Top Selling Items</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Qty Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in top_items %}
+                                <tr>
+                                    <td>{{ item.menu_item__name }}</td>
+                                    <td><strong>{{ item.qty_sold }}</strong></td>
+                                    <td>KSH {{ item.revenue|floatformat:0 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted">No data available</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Show/hide custom date range
+document.querySelector('select[name="period"]').addEventListener('change', function() {
+    const customDates = document.getElementById('customDates');
+    const customDatesEnd = document.getElementById('customDatesEnd');
+    if (this.value === 'custom') {
+        customDates.style.display = 'block';
+        customDatesEnd.style.display = 'block';
+    } else {
+        customDates.style.display = 'none';
+        customDatesEnd.style.display = 'none';
+    }
+});
+
+// Payment methods chart
+{% if payment_breakdown %}
+const ctx = document.getElementById('paymentChart');
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for p in payment_breakdown %}'{{ p.payment_method|title|default:"Cash" }}',{% endfor %}],
+        datasets: [{
+            data: [{% for p in payment_breakdown %}{{ p.total|floatformat:0 }},{% endfor %}],
+            backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#dc3545', '#6f42c1', '#fd7e14']
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { color: '#fff' } }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}
+{% endblock %}

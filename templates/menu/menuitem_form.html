@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - Cafeteria POS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h4 class="mb-4">{{ title }}</h4>
+
+    <!-- Show general messages (success/error) -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Show form-wide errors if any -->
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <i class="bi bi-list-check"></i> Menu Item Details
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <!-- Let crispy render all fields + show errors automatically -->
+                {{ form|crispy }}
+
+                <div class="d-flex gap-3 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Save Item
+                    </button>
+                    <a href="{% url 'menu:menuitem_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - CAFETERIA POS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-white">
+            <i class="bi bi-plus-circle"></i> {{ title }}
+        </h4>
+        <a href="{% url 'inventory:stock_list' %}" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left"></i> Back to Stock List
+        </a>
+    </div>
+
+    {% if form.errors %}
+        <div class="alert alert-danger">
+            <strong>Please correct the errors below:</strong>
+            {{ form.errors }}
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Stock Details</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-3">
+                    <!-- Menu Item -->
+                    <div class="col-md-6">
+                        <label for="{{ form.menu_item.id_for_label }}" class="form-label">
+                            {{ form.menu_item.label }}
+                        </label>
+                        {{ form.menu_item }}
+                        {% if form.menu_item.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.menu_item.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="col-md-6">
+                        <label for="{{ form.quantity.id_for_label }}" class="form-label">
+                            {{ form.quantity.label }}
+                        </label>
+                        {{ form.quantity }}
+                        {% if form.quantity.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.quantity.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Unit -->
+                    <div class="col-md-6">
+                        <label for="{{ form.unit.id_for_label }}" class="form-label">
+                            {{ form.unit.label }}
+                        </label>
+                        {{ form.unit }}
+                        {% if form.unit.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.unit.errors }}
+                            </div>
+                        {% endif %}
+                        <small class="text-muted">Unit of measurement for this item</small>
+                    </div>
+
+                    <!-- Custom Unit (only shown when "other" is selected) -->
+                    <div class="col-md-6" id="custom_unit_group" style="display: {% if form.instance.unit == 'other' or not form.instance.pk %}block{% else %}none{% endif %};">
+                        <label for="{{ form.custom_unit.id_for_label }}" class="form-label">
+                            {{ form.custom_unit.label }}
+                        </label>
+                        {{ form.custom_unit }}
+                        {% if form.custom_unit.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.custom_unit.errors }}
+                            </div>
+                        {% endif %}
+                        <small class="text-muted">Specify custom unit (e.g. crates, trays, dozen)</small>
+                    </div>
+
+                    <!-- Reorder Level -->
+                    <div class="col-md-6">
+                        <label for="{{ form.reorder_level.id_for_label }}" class="form-label">
+                            {{ form.reorder_level.label }}
+                        </label>
+                        {{ form.reorder_level }}
+                        {% if form.reorder_level.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.reorder_level.errors }}
+                            </div>
+                        {% endif %}
+                        <small class="text-muted">Alert when stock reaches this level</small>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="col-12">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">
+                            {{ form.notes.label }}
+                        </label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.notes.errors }}
+                            </div>
+                        {% endif %}
+                        <small class="text-muted">Optional notes about this stock addition</small>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-save"></i> Save Stock
+                    </button>
+                    <a href="{% url 'inventory:stock_list' %}" class="btn btn-outline-secondary ms-2">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show/hide custom unit field when "Other" is selected
+document.addEventListener('DOMContentLoaded', function() {
+    const unitSelect = document.querySelector('#id_unit');
+    const customGroup = document.querySelector('#custom_unit_group');
+
+    function toggleCustom() {
+        if (unitSelect && unitSelect.value === 'other') {
+            customGroup.style.display = 'block';
+            document.querySelector('#id_custom_unit').setAttribute('required', '');
+        } else {
+            customGroup.style.display = 'none';
+            document.querySelector('#id_custom_unit').removeAttribute('required');
+        }
+    }-
+
+    if (unitSelect) {
+        toggleCustom(); // initial state
+        unitSelect.addEventListener('change', toggleCustom);
+    }
+});
+</script>
+{% endblock %}

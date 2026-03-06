@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt - Order #{{ order.order_number }}</title>
+    <style>
+        @media print {
+            body { margin: 0; padding: 10px; }
+            .no-print { display: none; }
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 80mm;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #DAA520;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            margin: 5px 0;
+        }
+        
+        .contact {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .receipt-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        
+        .info-section {
+            margin: 15px 0;
+            font-size: 13px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 8px 4px;
+            text-align: left;
+            border-bottom: 1px dashed #ccc;
+        }
+        
+        th {
+            font-weight: bold;
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .totals {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 2px solid #000;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .grand-total {
+            font-size: 18px;
+            font-weight: bold;
+            padding-top: 10px;
+            border-top: 2px solid #000;
+            margin-top: 10px;
+        }
+        
+        .payment-info {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px dashed #000;
+            font-size: 12px;
+        }
+        
+        .print-btn {
+            margin: 20px auto;
+            display: block;
+            padding: 12px 40px;
+            background: #FFD700;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .print-btn:hover {
+            background: #DAA520;
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="no-print">
+        <button class="print-btn" onclick="window.print()">🖨️ Print Receipt</button>
+    </div>
+    
+    <div class="header">
+        <div class="logo">🏨 CAFETERIA POS</div>
+        <div class="subtitle"> CAFEE </div>
+        <div class="contact">Tel: 0705657096</div>
+        <div class="contact">Kakamega, Kenya</div>
+    </div>
+    
+    <div class="receipt-title">CUSTOMER RECEIPT</div>
+    
+    <div class="info-section">
+        <div class="info-row">
+            <span>Receipt No:</span>
+            <strong>{{ order.order_number }}</strong>
+        </div>
+        <div class="info-row">
+            <span>Date:</span>
+            <span>{{ order.created_at|date:"M d, Y" }}</span>
+        </div>
+        <div class="info-row">
+            <span>Time:</span>
+            <span>{{ order.created_at|time:"H:i" }}</span>
+        </div>
+        <div class="info-row">
+            <span>Served by:</span>
+            <span>{{ order.waiter.get_full_name }}</span>
+        </div>
+        {% if order.customer_name %}
+        <div class="info-row">
+            <span>Customer:</span>
+            <span>{{ order.customer_name }}</span>
+        </div>
+        {% endif %}
+        {% if order.table_number %}
+        <div class="info-row">
+            <span>Table:</span>
+            <span>{{ order.table_number }}</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th class="text-center">Qty</th>
+                <th class="text-right">Price</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items.all %}
+            <tr>
+                <td>{{ item.menu_item.name }}</td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-right">{{ item.unit_price|floatformat:0 }}</td>
+                <td class="text-right">{{ item.total|floatformat:0 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="totals">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>KSh {{ order.subtotal|floatformat:0 }}</span>
+        </div>
+        {% if order.tax > 0 %}
+        <div class="total-row">
+            <span>Tax:</span>
+            <span>KSh {{ order.tax|floatformat:0 }}</span>
+        </div>
+        {% endif %}
+        <div class="total-row grand-total">
+            <span>TOTAL:</span>
+            <span>KSh {{ order.total|floatformat:0 }}</span>
+        </div>
+    </div>
+    
+    {% if order.payments.exists %}
+    <div class="payment-info">
+        <div style="font-weight: bold; margin-bottom: 8px;">PAYMENT DETAILS:</div>
+        {% for payment in order.payments.all %}
+        <div class="info-row">
+            <span>{{ payment.get_payment_method_display }}:</span>
+            <strong>KSh {{ payment.amount|floatformat:0 }}</strong>
+        </div>
+        {% if payment.payment_method == 'CASH' and payment.change_given %}
+        <div class="info-row" style="font-size: 12px;">
+            <span>Change:</span>
+            <span>KSh {{ payment.change_given|floatformat:0 }}</span>
+        </div>
+        {% endif %}
+        {% if payment.payment_method == 'MPESA' %}
+        <div style="font-size: 11px; margin-top: 3px;">
+            Code: {{ payment.mpesa_transaction_code }}
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="footer">
+        <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">
+            THANK YOU FOR YOUR VISIT!
+        </div>
+        <div>Visit us again soon</div>
+        <div style="margin-top: 10px;">
+            ⭐⭐⭐⭐⭐
+        </div>
+        <div style="margin-top: 15px; font-size: 11px;">
+            Powered by CAFETERIA POS
+        </div>
+    </div>
+</body>
+</html>

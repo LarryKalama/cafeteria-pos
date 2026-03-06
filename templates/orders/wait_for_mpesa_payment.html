@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Waiting for M-Pesa Payment - Order #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <h2 class="mb-4 text-success">
+        <i class="bi bi-check-circle-fill"></i> Payment Initiated
+    </h2>
+
+    <div class="card shadow mx-auto" style="max-width: 500px;">
+        <div class="card-body py-5">
+            <h4>Please check your phone</h4>
+            <p class="lead mb-4">
+                Enter your M-Pesa PIN to complete payment of <strong>KSh {{ order.total|floatformat:0 }}</strong>
+            </p>
+
+            <div class="spinner-border text-primary mb-3" style="width: 4rem; height: 4rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+
+            <p class="text-muted">
+                This may take a few seconds. Do not close this page.
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-outline-secondary">
+            Cancel & Go Back
+        </a>
+    </div>
+</div>
+
+<script>
+    // Optional: auto-refresh or poll status (advanced)
+    // setTimeout(() => location.reload(), 15000);
+</script>
+{% endblock %}

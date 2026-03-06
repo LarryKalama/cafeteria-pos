@@ -1,0 +1,88 @@
+{% load static %}
+
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0"><i class="bi bi-credit-card"></i> Complete Payment</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{{ action_url }}">
+            {% csrf_token %}
+
+            <input type="hidden" name="order_id" value="{{ order.id }}">
+
+            <h6 class="mb-3">Select Payment Method:</h6>
+
+            <div class="btn-group w-100 mb-4" role="group">
+                <button type="button" class="btn btn-outline-secondary active" data-method="cash">
+                    <i class="bi bi-cash"></i> Cash
+                </button>
+                <button type="button" class="btn btn-outline-success" data-method="mpesa">
+                    <i class="bi bi-phone"></i> M-Pesa
+                </button>
+                <button type="button" class="btn btn-outline-warning" data-method="credit">
+                    <i class="bi bi-credit-card-2-front"></i> Credit
+                </button>
+            </div>
+
+            <!-- Cash fields -->
+            <div id="cash-fields" class="payment-fields">
+                <div class="mb-3">
+                    <label class="form-label">Amount Tendered (KSh)</label>
+                    <input type="number" name="amount_tendered" class="form-control" min="{{ order.total }}" step="0.01" required>
+                </div>
+                <small class="text-muted">Change will be calculated automatically</small>
+            </div>
+
+            <!-- M-Pesa fields -->
+            <div id="mpesa-fields" class="payment-fields" style="display: none;">
+                <div class="mb-3">
+                    <label class="form-label">M-Pesa Transaction Code</label>
+                    <input type="text" name="mpesa_code" class="form-control" placeholder="e.g. QAB7CDEF82" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Customer Phone Number</label>
+                    <input type="tel" name="mpesa_phone" class="form-control" placeholder="e.g. 0712345678" pattern="0[17][0-9]{8}" required>
+                </div>
+            </div>
+
+            <!-- Credit fields -->
+            <div id="credit-fields" class="payment-fields" style="display: none;">
+                <div class="mb-3">
+                    <label class="form-label">Credit Customer Name</label>
+                    <input type="text" name="credit_customer" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-lg btn-success">
+                    <i class="bi bi-check-circle"></i> Complete Payment - KSh {{ order.total|floatformat:0 }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const buttons = document.querySelectorAll('[data-method]');
+    const fields = {
+        'cash': document.getElementById('cash-fields'),
+        'mpesa': document.getElementById('mpesa-fields'),
+        'credit': document.getElementById('credit-fields')
+    };
+
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            buttons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+
+            Object.values(fields).forEach(field => field.style.display = 'none');
+
+            const method = this.getAttribute('data-method');
+            if (fields[method]) {
+                fields[method].style.display = 'block';
+            }
+        });
+    });
+});
+</script>

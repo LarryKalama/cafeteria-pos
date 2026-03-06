@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Waiter Performance - CAFETERIA POS{% endblock %}
+{% block page_title %}Waiter Performance Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-white">
+            <i class="bi bi-trophy"></i> Waiter Performance
+        </h4>
+        <div>
+            <a href="{% url 'reports:sales_report' %}" class="btn btn-outline-light">
+                <i class="bi bi-arrow-left"></i> Back to Sales Analytics
+            </a>
+        </div>
+    </div>
+
+    <!-- Period Selector & Generate Button -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label text-white">Period</label>
+                    <select name="period" class="form-select">
+                        <option value="today" {% if period == 'today' %}selected{% endif %}>Today</option>
+                        <option value="week" {% if period == 'week' %}selected{% endif %}>Last 7 Days</option>
+                        <option value="month" {% if period == 'month' or not period %}selected{% endif %}>Last 30 Days</option>
+                        <option value="this_month" {% if period == 'this_month' %}selected{% endif %}>This Month</option>
+                        <option value="custom" {% if period == 'custom' %}selected{% endif %}>Custom Range</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3" id="customDates" style="display: {% if period == 'custom' %}block{% else %}none{% endif %};">
+                    <label class="form-label text-white">Start Date</label>
+                    <input type="date" name="start" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
+                </div>
+
+                <div class="col-md-3" id="customDatesEnd" style="display: {% if period == 'custom' %}block{% else %}none{% endif %};">
+                    <label class="form-label text-white">End Date</label>
+                    <input type="date" name="end" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-warning w-100">
+                        <i class="bi bi-search"></i> Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Top Performer Highlight -->
+    {% if top_waiter %}
+    <div class="card mb-4 border-warning border-3">
+        <div class="card-header bg-warning text-dark text-center">
+            <h5 class="mb-0">
+                <i class="bi bi-trophy-fill"></i> Best Performer: {{ top_waiter.full_name }}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <h6>Total Sales</h6>
+                    <h4 class="text-warning fw-bold">KSH {{ top_waiter.total_sales|floatformat:0 }}</h4>
+                </div>
+                <div class="col-md-4">
+                    <h6>Total Orders</h6>
+                    <h4 class="fw-bold">{{ top_waiter.total_orders }}</h4>
+                </div>
+                <div class="col-md-4">
+                    <h6>Avg per Order</h6>
+                    <h4 class="text-info fw-bold">KSH {{ top_waiter.average_sale|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- All Waiters Table -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0"><i class="bi bi-people"></i> Waiter Performance</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-dark mb-0">
+                    <thead>
+                        <tr>
+                            <th>Waiter</th>
+                            <th>Total Orders</th>
+                            <th>Total Sales (KSH)</th>
+                            <th>Average Sale (KSH)</th>
+                            <th>Rank</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in waiter_stats %}
+                        <tr {% if forloop.first %}class="table-warning"{% endif %}>
+                            <td>
+                                {{ stat.full_name }}
+                                <small class="text-muted d-block">{{ stat.username }}</small>
+                            </td>
+                            <td>{{ stat.total_orders }}</td>
+                            <td>{{ stat.total_sales|floatformat:0 }}</td>
+                            <td>{{ stat.average_sale|floatformat:2 }}</td>
+                            <td>
+                                {% if forloop.first %}
+                                    <span class="badge bg-warning text-dark">1st</span>
+                                {% elif forloop.counter == 2 %}
+                                    <span class="badge bg-secondary">2nd</span>
+                                {% elif forloop.counter == 3 %}
+                                    <span class="badge bg-bronze">3rd</span>
+                                {% else %}
+                                    {{ forloop.counter }}th
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-exclamation-triangle fs-3"></i><br>
+                                No waiter performance data for the selected period
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show/hide custom date range
+    document.querySelector('[name="period"]').addEventListener('change', function() {
+        const custom = document.querySelectorAll('#customDates, #customDatesEnd');
+        custom.forEach(el => el.style.display = this.value === 'custom' ? 'block' : 'none');
+    });
+</script>
+{% endblock %}

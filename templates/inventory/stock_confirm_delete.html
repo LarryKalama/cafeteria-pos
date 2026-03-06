@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirm Delete Stock - CAFETERIA POS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-white">
+            <i class="bi bi-trash"></i> Confirm Delete
+        </h4>
+        <a href="{% url 'inventory:stock_list' %}" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left"></i> Back to Stock List
+        </a>
+    </div>
+
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">Delete Stock Entry</h5>
+        </div>
+        <div class="card-body">
+            <p class="lead">
+                Are you sure you want to delete the stock entry for
+                <strong>{{ stock.menu_item.name }}</strong>?
+            </p>
+            <p class="text-muted">
+                Current quantity: {{ stock.quantity }} {{ stock.unit }}<br>
+                This action cannot be undone.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Yes, Delete
+                </button>
+                <a href="{% url 'inventory:stock_list' %}" class="btn btn-outline-secondary ms-2">
+                    Cancel
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

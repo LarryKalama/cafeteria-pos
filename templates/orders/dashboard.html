@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - CAFETERIA POS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    {% if user.is_superadmin %}
+    <!-- Superadmin Dashboard -->
+    <div class="col-md-3">
+        <div class="stat-card" style="--bg-start: #D4AF37; --bg-end: #B8860B;">
+            <i class="bi bi-cart-check fs-1 mb-2"></i>
+            <div class="value">{{ total_orders_today }}</div>
+            <div class="label">Orders Today</div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card" style="--bg-start: #28a745; --bg-end: #20873a;">
+            <i class="bi bi-cash-stack fs-1 mb-2"></i>
+            <div class="value">KSH {{ total_sales_today|floatformat:0 }}</div>
+            <div class="label">Sales Today</div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card" style="--bg-start: #ffc107; --bg-end: #ff9800;">
+            <i class="bi bi-clock-history fs-1 mb-2"></i>
+            <div class="value">{{ pending_orders }}</div>
+            <div class="label">Pending Orders</div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card" style="--bg-start: #17a2b8; --bg-end: #138496;">
+            <i class="bi bi-people fs-1 mb-2"></i>
+            <div class="value">{{ recent_orders|length }}</div>
+            <div class="label">Recent Activity</div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- Waiter Dashboard -->
+    <div class="col-md-4">
+        <div class="stat-card" style="--bg-start: #D4AF37; --bg-end: #B8860B;">
+            <i class="bi bi-cart-check fs-1 mb-2"></i>
+            <div class="value">{{ my_orders_today }}</div>
+            <div class="label">My Orders Today</div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card" style="--bg-start: #28a745; --bg-end: #20873a;">
+            <i class="bi bi-cash-stack fs-1 mb-2"></i>
+            <div class="value">KSH {{ my_sales_today|floatformat:0 }}</div>
+            <div class="label">My Sales Today</div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stat-card" style="--bg-start: #ffc107; --bg-end: #ff9800;">
+            <i class="bi bi-clock-history fs-1 mb-2"></i>
+            <div class="value">{{ my_pending_orders }}</div>
+            <div class="label">Pending Orders</div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recent Orders -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-list-ul"></i> Recent Orders
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Waiter</th>
+                        <th>Table</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recent_orders|default:my_recent_orders %}
+                    <tr>
+                        <td><strong>{{ order.order_number }}</strong></td>
+                        <td>{{ order.waiter.get_full_name|default:order.waiter.username }}</td>
+                        <td>{{ order.table_number|default:"-" }}</td>
+                        <td>{{ order.customer_name|default:"-" }}</td>
+                        <td>{{ order.get_item_count }}</td>
+                        <td><strong>KSH {{ order.total }}</strong></td>
+                        <td>
+                            <span class="badge 
+                                {% if order.status == 'completed' %}bg-success
+                                {% elif order.status == 'cancelled' %}bg-danger
+                                {% elif order.status == 'confirmed' %}bg-primary
+                                {% else %}bg-warning{% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ order.created_at|timesince }} ago</td>
+                        <td>
+                            <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-sm btn-info btn-action">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">No orders yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="text-center mt-3">
+            <a href="{% url 'orders:order_list' %}" class="btn btn-outline-primary">
+                <i class="bi bi-list-ul"></i> View All Orders
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <a href="{% url 'orders:create_order' %}" class="btn btn-primary btn-lg w-100 py-3">
+            <i class="bi bi-plus-circle fs-4"></i>
+            <div class="mt-2">New Order</div>
+        </a>
+    </div>
+    
+    {% if user.is_superadmin %}
+    <div class="col-md-4">
+        <a href="{% url 'inventory:stock_list' %}" class="btn btn-warning btn-lg w-100 py-3">
+            <i class="bi bi-box-seam fs-4"></i>
+            <div class="mt-2">Manage Stock</div>
+        </a>
+    </div>
+    
+    <div class="col-md-4">
+        <a href="{% url 'reports:sales_report' %}" class="btn btn-info btn-lg w-100 py-3">
+            <i class="bi bi-graph-up fs-4"></i>
+            <div class="mt-2">View Reports</div>
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

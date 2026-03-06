@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Adjust Stock - Cafeteria POS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-white">
+                <i class="bi bi-box-seam"></i> Adjust Stock
+            </h2>
+            <p class="text-white-50">
+                Item: <strong>{{ stock.menu_item.name }}</strong>
+                (Current quantity: {{ stock.quantity }} {{ stock.unit }})
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-pencil-square"></i> Update Quantity
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+
+                        <div class="d-flex gap-3 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Save Adjustment
+                            </button>
+                            <a href="{% url 'inventory:stock_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Stock List
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-info-circle"></i> Notes
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><strong>Positive value</strong>: Add stock (e.g. +50)</li>
+                        <li><strong>Negative value</strong>: Remove stock (e.g. -20)</li>
+                        <li>Reason field is optional but recommended for audit trail</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

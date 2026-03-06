@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block title %}Expenses - CAFETERIA POS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-white">
+            <i class="bi bi-receipt"></i> Expenses
+        </h4>
+        <div>
+            {% if perms.can_manage_expenses or user.role == 'SUPERADMIN' %}
+            <a href="{% url 'expenses:expense_add' %}" class="btn btn-success">
+                <i class="bi bi-plus-lg"></i> Add Expense
+            </a>
+            <a href="{% url 'expenses:expense_export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-light ms-2">
+                <i class="bi bi-download"></i> Export CSV
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h6>Total Expenses</h6>
+                    <h3>KSH {{ total_expenses|floatformat:0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h6>This Month</h6>
+                    <h3>KSH {{ monthly_total|floatformat:0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h6>Records</h6>
+                    <h3>{{ expenses.count }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profit Comparison -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-{% if net_profit >= 0 %}success{% else %}danger{% endif %} d-flex align-items-center shadow-sm">
+                <i class="bi bi-cash-coin me-3 fs-3"></i>
+                <div>
+                    <strong>Net Profit/Loss (last {{ period_days }} days):</strong><br>
+                    <span class="fs-4 fw-bold">KSH {{ net_profit|floatformat:0 }}</span>
+                    <small class="d-block mt-1">
+                        Sales: KSH {{ sales_total|floatformat:0 }}
+                        – Expenses: KSH {{ expenses_in_period|floatformat:0 }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label text-white">Category</label>
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-white">Start Date</label>
+                    <input type="date" name="start" class="form-control" value="{{ request.GET.start }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-white">End Date</label>
+                    <input type="date" name="end" class="form-control" value="{{ request.GET.end }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-warning w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Expenses Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-dark mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount (KSH)</th>
+                            <th>Paid By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exp in expenses %}
+                        <tr>
+                            <td>{{ exp.date|date:"M d, Y" }}</td>
+                            <td>{{ exp.display_category }}</td>
+                            <td>{{ exp.description|truncatewords:10|default:"-" }}</td>
+                            <td>{{ exp.amount|floatformat:0 }}</td>
+                            <td>{{ exp.paid_by.get_full_name|default:exp.paid_by.username|default:"-" }}</td>
+                            <td>
+                                {% if perms.can_manage_expenses or user.role == 'SUPERADMIN' %}
+                                <a href="{% url 'expenses:expense_edit' exp.pk %}" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'expenses:expense_delete' exp.pk %}" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                No expenses recorded yet
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Breakdown Chart -->
+    {% if category_summary %}
+    <div class="card mt-5 shadow-lg border-0">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-pie-chart-fill me-2"></i> Expense Breakdown by Category</h5>
+            <small class="text-white-50">Total: KSH {{ total_expenses|floatformat:0 }}</small>
+        </div>
+        <div class="card-body p-4">
+            <canvas id="categoryChart" height="320"></canvas>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const ctx = document.getElementById('categoryChart');
+    if (!ctx) return;
+
+    const labels = [
+        {% for item in category_summary %}
+            '{{ item.category__name|default:item.custom_category|default:"Miscellaneous" }}',
+        {% endfor %}
+    ];
+
+    const data = [
+        {% for item in category_summary %}
+            {{ item.total|floatformat:2 }},
+        {% endfor %}
+    ];
+
+    const backgroundColors = [
+        '#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1',
+        '#96CEB4', '#FFEEAD', '#D4A5A5', '#9B59B6',
+        '#3498DB', '#E74C3C', '#2ECC71', '#F1C40F',
+        '#E67E22', '#1ABC9C', '#34495E', '#7F8C8D'
+    ];
+
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: backgroundColors.slice(0, labels.length),
+                borderColor: '#1a1a1a',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#fff',
+                        font: { size: 14 },
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.85)',
+                    titleFont: { size: 16 },
+                    bodyFont: { size: 14 },
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.raw;
+                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: KSh ${value.toLocaleString()} (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

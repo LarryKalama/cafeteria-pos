@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Credit Sale Detail{% endblock %}
+{% block page_title %}Credit Sale - {{ credit_sale.customer.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-receipt"></i> Credit Sale Information
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Customer:</strong> {{ credit_sale.customer.name }}<br>
+                        <strong>Phone:</strong> {{ credit_sale.customer.phone }}<br>
+                        <strong>Order:</strong> #{{ credit_sale.order.order_number }}
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <strong>Date:</strong> {{ credit_sale.created_at|date:"M d, Y" }}<br>
+                        <strong>Due Date:</strong> {{ credit_sale.due_date|default:"Not set" }}<br>
+                        <strong>Status:</strong>
+                        <span class="badge 
+                            {% if credit_sale.status == 'fully_paid' %}bg-success
+                            {% elif credit_sale.status == 'overdue' %}bg-danger
+                            {% elif credit_sale.status == 'partially_paid' %}bg-info
+                            {% else %}bg-warning{% endif %}">
+                            {{ credit_sale.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="fs-5"><strong>KSH {{ credit_sale.amount }}</strong></div>
+                            <small>Total Amount</small>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="fs-5 text-success"><strong>KSH {{ credit_sale.amount_paid }}</strong></div>
+                            <small>Amount Paid</small>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="fs-5 text-danger"><strong>KSH {{ credit_sale.get_balance }}</strong></div>
+                            <small>Balance Due</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payment History -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history"></i> Payment History
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Reference</th>
+                                <th>Received By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>{{ payment.created_at|date:"M d, Y H:i" }}</td>
+                                <td><strong>KSH {{ payment.amount }}</strong></td>
+                                <td>{{ payment.get_payment_method_display }}</td>
+                                <td>{{ payment.mpesa_code|default:payment.reference_number|default:"-" }}</td>
+                                <td>{{ payment.received_by.get_full_name|default:payment.received_by.username }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No payments recorded yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        {% if credit_sale.get_balance > 0 %}
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-cash"></i> Record Payment
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'payments:record_credit_payment' credit_sale.pk %}">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Amount (KSH) *</label>
+                        <input type="number" name="amount" class="form-control" 
+                               max="{{ credit_sale.get_balance }}" step="0.01" required>
+                        <div class="form-text">Max: KSH {{ credit_sale.get_balance }}</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method *</label>
+                        <select name="payment_method" class="form-select" required>
+                            <option value="cash">Cash</option>
+                            <option value="mpesa">M-Pesa</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3" id="mpesaCodeField" style="display:none;">
+                        <label class="form-label">M-Pesa Code</label>
+                        <input type="text" name="mpesa_code" class="form-control">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Reference</label>
+                        <input type="text" name="reference_number" class="form-control">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-check-circle"></i> Record Payment
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle"></i> This credit sale is fully paid!
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.querySelector('select[name="payment_method"]')?.addEventListener('change', function() {
+    const mpesaField = document.getElementById('mpesaCodeField');
+    if (this.value === 'mpesa') {
+        mpesaField.style.display = 'block';
+    } else {
+        mpesaField.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

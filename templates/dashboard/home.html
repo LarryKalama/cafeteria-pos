@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Cafeteria POS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-white">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </h2>
+            <p class="text-white-50">Welcome, {{ user.get_full_name }}!</p>
+        </div>
+    </div>
+
+    {% if user.is_superadmin %}
+    <!-- SUPERADMIN DASHBOARD -->
+    <div class="row g-4 mb-4">
+        <!-- Today's Orders -->
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Today's Orders</h6>
+                            <h2 class="mb-0">{{ today_orders_count }}</h2>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Sales (only visible to superadmin) -->
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Today's Sales</h6>
+                            <h2 class="mb-0">KSh {{ today_sales|floatformat:0 }}</h2>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Credit -->
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Pending Credit</h6>
+                            <h2 class="mb-0">KSh {{ pending_credit|floatformat:0 }}</h2>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="bi bi-credit-card"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock -->
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Low Stock Items</h6>
+                            <h2 class="mb-0">{{ low_stock_count }}</h2>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Recent Orders -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-clock-history"></i> Recent Orders
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Waiter</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'orders:order_detail' order.pk %}">
+                                            {{ order.order_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ order.customer_name|default:"Walk-in" }}</td>
+                                    <td>{{ order.waiter.get_full_name }}</td>
+                                    <td>KSh {{ order.total|floatformat:0 }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ order.status|lower }}">
+                                            {{ order.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ order.created_at|timesince }} ago</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">
+                                        No orders yet today
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Alert -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-exclamation-triangle-fill text-warning"></i> Low Stock Alerts
+                </div>
+                <div class="card-body">
+                    {% if low_stock_items %}
+                    <div class="list-group">
+                        {% for stock in low_stock_items %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ stock.menu_item.name }}</h6>
+                                    <small class="text-danger">
+                                        Only {{ stock.quantity }} {{ stock.display_unit }} left
+                                    </small>
+                                </div>
+                                <a href="{% url 'inventory:stock_adjust' stock.pk %}" class="btn btn-sm btn-primary">
+                                    Add Stock
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-success">
+                        <i class="bi bi-check-circle"></i> All items in stock!
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- WAITER / CASHIER DASHBOARD -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Orders Today</h6>
+                            <h2 class="mb-0">{{ orders_today }}</h2>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="card-body text-center">
+                    <a href="{% url 'orders:create_order' %}" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-plus-circle"></i> New Order
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-clock-history"></i> My Recent Orders
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Table</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Time</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td>{{ order.order_number }}</td>
+                                    <td>{{ order.customer_name|default:"Walk-in" }}</td>
+                                    <td>{{ order.table_number|default:"-" }}</td>
+                                    <td>KSh {{ order.total|floatformat:0 }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ order.status|lower }}">
+                                            {{ order.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ order.created_at|timesince }} ago</td>
+                                    <td>
+                                        <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">
+                                            View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">
+                                        No orders yet
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .badge.bg-pending { background-color: #ffc107 !important; }
+    .badge.bg-in_kitchen { background-color: #17a2b8 !important; }
+    .badge.bg-ready { background-color: #28a745 !important; }
+    .badge.bg-completed { background-color: #6c757d !important; }
+    .badge.bg-cancelled { background-color: #dc3545 !important; }
+</style>
+{% endblock %}

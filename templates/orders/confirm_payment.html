@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Pay with M-Pesa - Order #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4">Pay with M-Pesa</h2>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5>Order #{{ order.order_number }} - KSh {{ order.total|floatformat:0 }}</h5>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <form method="post" action="{% url 'orders:initiate_mpesa_payment' order.pk %}">
+                {% csrf_token %}
+
+                <div class="mb-4">
+                    <label for="phone_number" class="form-label fw-bold">
+                        Enter your M-Pesa phone number (2547XXXXXXXX)
+                    </label>
+                    <input type="tel" name="phone_number" id="phone_number" class="form-control form-control-lg" placeholder="254712345678" required pattern="2547[0-9]{8}" title="Enter valid Kenyan number starting with 2547">
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-lg btn-success">
+                        <i class="bi bi-phone"></i> Pay with M-Pesa (STK Push)
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-4 text-center text-muted">
+                You will receive a prompt on your phone to enter PIN.
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-outline-secondary">Cancel & Go Back</a>
+    </div>
+</div>
+{% endblock %}

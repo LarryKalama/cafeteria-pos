@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirm Cash Payment - Order #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <h2>Confirm Cash Payment</h2>
+    <p class="lead">Total amount due: <strong>KSh {{ order.total|floatformat:0 }}</strong></p>
+
+    <form method="post">
+        {% csrf_token %}
+        <p>Have you received cash payment?</p>
+        <button type="submit" class="btn btn-lg btn-success">Yes, Mark as Paid</button>
+        <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-lg btn-outline-secondary ms-3">Cancel</a>
+    </form>
+</div>
+{% endblock %}

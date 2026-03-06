@@ -1,0 +1,281 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CAFETERIA POS{% endblock %}</title>
+
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'images/favicon.png' %}">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --gold: #FFD700;
+            --gold-dark: #DAA520;
+            --gold-light: #FFF8DC;
+            --dark: #1a1a1a;
+            --gray: #6c757d;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: linear-gradient(135deg, var(--dark) 0%, #2d2d2d 100%);
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
+        }
+
+        .navbar-brand {
+            color: var(--gold) !important;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .nav-link {
+            color: #fff !important;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            color: var(--gold) !important;
+            transform: translateY(-2px);
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark);
+            font-weight: bold;
+            border-radius: 15px 15px 0 0 !important;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: none;
+            color: var(--dark);
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        /* Stats cards */
+        .stat-card {
+            background: linear-gradient(135deg, var(--gold-light) 0%, #fff 100%);
+            border-left: 4px solid var(--gold);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            color: var(--gold-dark);
+        }
+
+        /* Tables */
+        .table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark);
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: var(--gold-light);
+        }
+
+        /* Alerts */
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+            }
+            .navbar, .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'dashboard:home' %}">
+                <img src="{% static 'images/favicon.png' %}" width="30" height="30" class="d-inline-block align-top me-2 rounded-circle" alt="">
+                CAFETERIA POS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard:home' %}">
+                            <i class="bi bi-house"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <!-- Everyone (logged in) -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'orders:create_order' %}">
+                            <i class="bi bi-cart-plus"></i> New Order
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'orders:order_list' %}">
+                            <i class="bi bi-receipt"></i> Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'menu:menuitem_list' %}">
+                            <i class="bi bi-book"></i> Menu
+                        </a>
+                    </li>
+
+                    <!-- Waiter + Cashier + Superadmin -->
+                    {% if user.role in 'SUPERADMIN WAITER CASHIER' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'inventory:stock_list' %}">
+                            <i class="bi bi-box-seam"></i> Stock
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'expenses:expense_list' %}">
+                            <i class="bi bi-receipt-cutoff"></i> Expenses
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Quick-add Expense (same as New Order style) -->
+                    {% if perms.can_manage_expenses or user.role in 'SUPERADMIN CASHIER WAITER' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'expenses:expense_add' %}">
+                            <i class="bi bi-plus-circle"></i> Expense
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Reports link - different for superadmin vs cashier/waiter -->
+                    {% if user.role == 'SUPERADMIN' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'reports:sales_report' %}">
+                            <i class="bi bi-graph-up"></i> Reports
+                        </a>
+                    </li>
+                    {% elif user.role in 'CASHIER WAITER' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'reports:today_summary' %}">
+                            <i class="bi bi-list-check"></i> Today's Summary
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Only Superadmin -->
+                    {% if user.is_superadmin %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-gear"></i> Management
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'menu:menuitem_list' %}">Menu Items</a></li>
+                            <li><a class="dropdown-item" href="{% url 'inventory:stock_list' %}">Inventory</a></li>
+                            <li><a class="dropdown-item" href="{% url 'payments:credit_customer_list' %}">Credit Customers</a></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:user_list' %}">Users</a></li>
+                            <!-- Add more superadmin-only links here if needed -->
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-graph-up"></i> Reports
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'reports:sales_report' %}">Sales Report</a></li>
+                            <li><a class="dropdown-item" href="{% url 'reports:waiter_performance' %}">Waiter Performance</a></li>
+                            <li><a class="dropdown-item" href="{% url 'payments:credit_sale_list' %}">Credit Sales</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ user.get_full_name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    {% if messages %}
+    <div class="container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% block extra_js %}{% endblock %}
+
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

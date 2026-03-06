@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+
+{% block title %}New Order - CAFETERIA POS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h2 class="text-white">
+                <i class="bi bi-cart-plus"></i> New Order
+            </h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Menu Items (Left Side) -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-pills card-header-pills" id="categoryTabs" role="tablist">
+                        {% for category in categories %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {% if forloop.first %}active{% endif %}"
+                                    id="cat-{{ category.id }}-tab"
+                                    data-bs-toggle="pill"
+                                    data-bs-target="#cat-{{ category.id }}"
+                                    type="button">
+                                {{ category.name }}
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card-body" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="tab-content" id="categoryTabContent">
+                        {% for category in categories %}
+                        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                             id="cat-{{ category.id }}">
+                            <div class="row g-3">
+                                {% for item in category.items.all %}
+                                {% if item.is_available and item.is_active %}
+                                <div class="col-md-4 col-6">
+                                    <div class="card menu-item-card h-100"
+                                         onclick="addToCart({{ item.id }}, '{{ item.name|escapejs }}', {{ item.selling_price }})">
+                                        <div class="card-body text-center">
+                                            {% if item.image %}
+                                            <img src="{{ item.image.url }}"
+                                                 alt="{{ item.name }}"
+                                                 class="img-fluid mb-2"
+                                                 style="max-height: 100px; object-fit: cover;">
+                                            {% else %}
+                                            <i class="bi bi-food-menu" style="font-size: 3rem; color: #DAA520;"></i>
+                                            {% endif %}
+                                            <h6 class="mb-1">{{ item.name }}</h6>
+                                            <p class="text-muted mb-0">
+                                                <strong>KSh {{ item.selling_price|floatformat:0 }}</strong>
+                                            </p>
+                                            {% if item.track_inventory %}
+                                            <small class="text-success">
+                                                <i class="bi bi-check-circle"></i> {{ item.current_stock }} in stock
+                                            </small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart (Right Side) -->
+        <div class="col-md-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <i class="bi bi-cart"></i> Order Cart
+                </div>
+                <div class="card-body">
+                    <!-- Customer Info -->
+                    <div class="mb-3">
+                        <label class="form-label">Customer Name (Optional)</label>
+                        <input type="text" class="form-control" id="customerName"
+                               placeholder="Walk-in customer">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Table Number (Optional)</label>
+                        <input type="text" class="form-control" id="tableNumber"
+                               placeholder="e.g., Table 1">
+                    </div>
+
+                    <hr>
+
+                    <!-- Cart Items -->
+                    <div id="cartItems" style="max-height: 300px; overflow-y: auto;">
+                        <p class="text-muted text-center">Cart is empty</p>
+                    </div>
+
+                    <hr>
+
+                    <!-- Total -->
+                    <div class="d-flex justify-content-between mb-3">
+                        <h5>Total:</h5>
+                        <h5 class="text-success">KSh <span id="cartTotal">0</span></h5>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-lg" onclick="submitOrder()" id="submitBtn" disabled>
+                            <i class="bi bi-check-circle"></i> Place Order
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="clearCart()">
+                            <i class="bi bi-trash"></i> Clear Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .menu-item-card {
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 2px solid transparent;
+    }
+
+    .menu-item-card:hover {
+        border-color: #FFD700;
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+    }
+
+    .cart-item {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+</style>
+
+<script>
+let cart = [];
+
+function addToCart(id, name, selling_price) {
+    // Safe price handling
+    const price = parseFloat(selling_price) || 0;
+
+    // Check if item already in cart
+    const existingItem = cart.find(item => item.id === id);
+
+    if (existingItem) {
+        existingItem.quantity++;
+    } else {
+        cart.push({
+            id: id,
+            name: name,
+            price: price,
+            quantity: 1,
+            notes: ''
+        });
+    }
+
+    updateCart();
+}
+
+function removeFromCart(id) {
+    cart = cart.filter(item => item.id !== id);
+    updateCart();
+}
+
+function updateQuantity(id, change) {
+    const item = cart.find(item => item.id === id);
+    if (item) {
+        item.quantity += change;
+        if (item.quantity <= 0) {
+            removeFromCart(id);
+        } else {
+            updateCart();
+        }
+    }
+}
+
+function updateCart() {
+    const cartItemsDiv = document.getElementById('cartItems');
+    const cartTotalSpan = document.getElementById('cartTotal');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (cart.length === 0) {
+        cartItemsDiv.innerHTML = '<p class="text-muted text-center">Cart is empty</p>';
+        cartTotalSpan.textContent = '0.00';
+        submitBtn.disabled = true;
+        return;
+    }
+
+    let html = '';
+    let total = 0;
+
+    cart.forEach(item => {
+        // Safe math
+        const price = parseFloat(item.price) || 0;
+        const qty = parseInt(item.quantity) || 1;
+        const itemTotal = price * qty;
+        total += itemTotal;
+
+        html += `
+            <div class="cart-item">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <strong>${item.name}</strong>
+                    <button class="btn btn-sm btn-danger" onclick="removeFromCart(${item.id})">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" onclick="updateQuantity(${item.id}, -1)">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" disabled>${qty}</button>
+                        <button class="btn btn-outline-secondary" onclick="updateQuantity(${item.id}, 1)">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                    <span class="text-success">
+                        KSh ${(itemTotal).toFixed(0)}
+                    </span>
+                </div>
+            </div>
+        `;
+    });
+
+    cartItemsDiv.innerHTML = html;
+    cartTotalSpan.textContent = total.toFixed(0);
+    submitBtn.disabled = (total <= 0 || isNaN(total));
+}
+
+function clearCart() {
+    if (confirm('Clear all items from cart?')) {
+        cart = [];
+        updateCart();
+    }
+}
+
+function submitOrder() {
+    if (cart.length === 0) {
+        alert('Cart is empty!');
+        return;
+    }
+
+    const customerName = document.getElementById('customerName').value;
+    const tableNumber = document.getElementById('tableNumber').value;
+
+    // Create form and submit
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "orders:create_order" %}';
+
+    // CSRF token
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = '{{ csrf_token }}';
+    form.appendChild(csrfInput);
+
+    // Customer name
+    const nameInput = document.createElement('input');
+    nameInput.type = 'hidden';
+    nameInput.name = 'customer_name';
+    nameInput.value = customerName;
+    form.appendChild(nameInput);
+
+    // Table number
+    const tableInput = document.createElement('input');
+    tableInput.type = 'hidden';
+    tableInput.name = 'table_number';
+    tableInput.value = tableNumber;
+    form.appendChild(tableInput);
+
+    // Cart data (ensure price is sent as string number)
+    cart.forEach(item => {
+        item.price = parseFloat(item.price) || 0;
+    });
+
+    const cartInput = document.createElement('input');
+    cartInput.type = 'hidden';
+    cartInput.name = 'cart_data';
+    cartInput.value = JSON.stringify(cart);
+    form.appendChild(cartInput);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+{% endblock %}
