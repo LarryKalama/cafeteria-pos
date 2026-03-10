@@ -59,3 +59,30 @@ def home(request):
         }
 
     return render(request, 'dashboard/home.html', context)
+
+
+# dashboard/views.py (or orders/views.py)
+
+from django.contrib.auth import get_user_model
+from django.http import HttpResponse
+
+
+def temp_create_superuser(request):
+    User = get_user_model()
+    username = "christa"
+
+    if User.objects.filter(username=username).exists():
+        return HttpResponse(f"Superuser '{username}' already exists. You can log in now.")
+
+    try:
+        User.objects.create_superuser(
+            username=username,
+            email="larrykalama8@gmail.com",
+            password="#Lenny254."
+        )
+        return HttpResponse(f"Superuser '{username}' created successfully!<br>"
+                            f"Username: christa<br>"
+                            f"Password: #Lenny254.<br>"
+                            f"You can now <a href='/accounts/login/'>log in</a>.")
+    except Exception as e:
+        return HttpResponse(f"Error creating superuser: {str(e)}")

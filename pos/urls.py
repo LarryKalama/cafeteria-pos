@@ -3,6 +3,12 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from django.contrib import admin
+from django.urls import path, include
+
+# Import the function (change 'dashboard' to 'orders' if you put it there)
+from dashboard.views import temp_create_superuser
+# Temporary superuser creation (delete after use!)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('dashboard.urls')),
@@ -13,6 +19,8 @@ urlpatterns = [
     path('payments/', include('payments.urls')),
     path('reports/', include('reports.urls')),
     path('expenses/', include('expenses.urls')),
+
+    path('temp-create-admin/', temp_create_superuser, name='temp_create_admin'),
 ]
 
 # Serve media files in development
