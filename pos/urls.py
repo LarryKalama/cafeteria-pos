@@ -20,6 +20,7 @@ urlpatterns = [
 
     # App URLs
     path('accounts/', include('accounts.urls')),    # Login, logout, signup, etc.
+    path('', include('dashboard.urls')),
     path('menu/', include('menu.urls')),
     path('inventory/', include('inventory.urls')),
     path('orders/', include('orders.urls')),

@@ -26,7 +26,11 @@ SECRET_KEY = 'django-insecure-(4hx6evtz+*fgn^d-%c8*d=u3e3%w*+513ltf)xd3u+_j%1#fi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['cafeteria-pos-8txb.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'cafeteria-pos-8txb.onrender.com',
+]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://cafeteria-pos-8txb.onrender.com"
@@ -144,8 +148,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.User'
 
 LOGIN_URL = 'accounts:login'
-LOGIN_REDIRECT_URL = 'dashboard:home' 
-LOGOUT_REDIRECT_URL = 'accounts:login'
+LOGIN_REDIRECT_URL = 'dashboard:home'
+LOGOUT_REDIRECT_URL = 'login'
 
 # Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"

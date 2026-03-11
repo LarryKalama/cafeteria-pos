@@ -3,11 +3,11 @@
 {% block title %}Login - CAFETERIA POS{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container py-5">
     <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
         <div class="col-md-5">
             <div class="card shadow-lg">
-                <div class="card-header text-center py-4">
+                <div class="card-header text-center py-4 bg-primary text-white">
                     <i class="bi bi-shop" style="font-size: 3rem;"></i>
                     <h3 class="mb-0 mt-2">CAFETERIA POS</h3>
                     <p class="text-muted mb-0">CAFEE</p>
@@ -30,7 +30,7 @@
                         </div>
                     {% endif %}
 
-                    <form method="post" action="{% url 'accounts:login' %}">
+                    <form method="post">
                         {% csrf_token %}
 
                         <div class="mb-4">
@@ -62,22 +62,10 @@
                         </button>
                     </form>
                 </div>
-
                 <div class="card-footer text-center text-muted py-3">
                     <small>© 2025 CAFETERIA POS. All rights reserved.</small>
                 </div>
             </div>
-
-            <!-- Quick Info for Testing (uncomment if needed during development) -->
-            <!--
-            <div class="alert alert-info mt-3">
-                <h6 class="fw-bold"><i class="bi bi-info-circle"></i> Default Accounts:</h6>
-                <small>
-                    <strong>Superadmin:</strong> admin / admin123<br>
-                    <strong>Waiter:</strong> waiter1 / waiter123
-                </small>
-            </div>
-            -->
         </div>
     </div>
 </div>
