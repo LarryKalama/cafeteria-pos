@@ -1,6 +1,10 @@
+"""
+Forms for the Accounts app
+"""
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import User
+
 
 class LoginForm(forms.Form):
     """Login form"""
@@ -22,10 +26,13 @@ class LoginForm(forms.Form):
 
 class UserCreateForm(UserCreationForm):
     """Form for creating new users"""
+
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'phone_number', 
-                  'role', 'password1', 'password2']
+        fields = [
+            'username', 'first_name', 'last_name', 'email', 'phone_number',
+            'role', 'password1', 'password2'
+        ]
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -34,19 +41,23 @@ class UserCreateForm(UserCreationForm):
             'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
             'role': forms.Select(attrs={'class': 'form-select'}),
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Apply form-control class to password fields dynamically
         self.fields['password1'].widget.attrs.update({'class': 'form-control'})
         self.fields['password2'].widget.attrs.update({'class': 'form-control'})
 
 
 class UserUpdateForm(forms.ModelForm):
     """Form for updating users"""
+
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'phone_number', 
-                  'role', 'is_active']
+        fields = [
+            'username', 'first_name', 'last_name', 'email', 'phone_number',
+            'role', 'is_active'
+        ]
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
