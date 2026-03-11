@@ -58,7 +58,7 @@ def first_time_setup(request):
                 request,
                 "Super Admin account created successfully! Welcome to Cafeteria POS."
             )
-            return redirect('dashboard:home')  # Change to your actual dashboard URL name
+            return redirect('home')  # Change to your actual dashboard URL name
 
         except Exception as e:
             messages.error(request, f"Error creating account: {str(e)}")
