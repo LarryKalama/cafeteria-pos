@@ -1,10 +1,72 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from .models import User
 from .forms import LoginForm, UserCreateForm, UserUpdateForm
+from django.contrib.auth import login
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+def first_time_setup(request):
+    """
+    First-time setup view: only shown if no superuser exists.
+    Creates the initial Super Admin account and auto-logs in.
+    """
+    # If any superuser already exists → redirect to login (setup is done)
+    if User.objects.filter(is_superuser=True).exists():
+        messages.info(request, "System is already set up. Please log in.")
+        return redirect('accounts:login')  # or 'login' if that's your URL name
+
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        password_confirm = request.POST.get('password_confirm', '')
+
+        # Basic validation
+        if not username or not password:
+            messages.error(request, "Username and password are required.")
+            return redirect('setup')
+
+        if password != password_confirm:
+            messages.error(request, "Passwords do not match.")
+            return redirect('setup')
+
+        if len(password) < 8:
+            messages.error(request, "Password must be at least 8 characters long.")
+            return redirect('setup')
+
+        try:
+            # Create the superuser
+            user = User.objects.create_superuser(
+                username=username,
+                email=email,
+                password=password,
+            )
+            # Optional: set additional fields if your User model has them
+            # user.role = 'SUPERADMIN'
+            # user.is_staff = True
+            user.save()
+
+            # Auto-login the new admin
+            login(request, user)
+
+            messages.success(
+                request,
+                "Super Admin account created successfully! Welcome to Cafeteria POS."
+            )
+            return redirect('dashboard:home')  # Change to your actual dashboard URL name
+
+        except Exception as e:
+            messages.error(request, f"Error creating account: {str(e)}")
+            return redirect('setup')
+
+    # GET request: show the setup form
+    return render(request, 'accounts/first_time_setup.html')
+
 
 def is_superadmin(user):
     """Check if user is superadmin"""

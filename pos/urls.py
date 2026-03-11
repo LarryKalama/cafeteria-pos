@@ -28,8 +28,7 @@ urlpatterns = [
     # First-time setup page (only shows if no superuser exists)
     path('setup/', first_time_setup, name='setup'),
 
-    # Temporary superuser creation endpoint (delete after first admin is created!)
-    path('temp-create-admin/', temp_create_superuser, name='temp_create_admin'),
+
 ]
 
 # Serve media and static files in development mode
