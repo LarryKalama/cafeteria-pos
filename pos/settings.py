@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-(4hx6evtz+*fgn^d-%c8*d=u3e3%w*+513ltf)xd3u+_j%1#fi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*']  # temporary — safe for free tier testing
+ALLOWED_HOSTS = ['cafeteria-pos-8txb.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
