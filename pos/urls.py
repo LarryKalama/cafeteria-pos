@@ -5,19 +5,21 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-# Import the setup view from accounts app
-from accounts.views import first_time_setup
+# Import your main dashboard home view (root entry point)
+from dashboard.views import home
 
-# Import the temporary superuser view from dashboard app
-from dashboard.views import temp_create_superuser
+# Import the first-time setup view from accounts app
+from accounts.views import first_time_setup
 
 urlpatterns = [
     # Admin site
     path('admin/', admin.site.urls),
 
+    # Root URL - this is now the main entry point (handles /)
+    path('', home, name='home'),  # ← root goes directly to dashboard home view
+
     # App URLs
-    path('', include('dashboard.urls')),          # Dashboard / home
-    path('accounts/', include('accounts.urls')),  # Login, logout, etc.
+    path('accounts/', include('accounts.urls')),    # Login, logout, signup, etc.
     path('menu/', include('menu.urls')),
     path('inventory/', include('inventory.urls')),
     path('orders/', include('orders.urls')),
@@ -25,9 +27,8 @@ urlpatterns = [
     path('reports/', include('reports.urls')),
     path('expenses/', include('expenses.urls')),
 
-    # First-time setup page (only shows if no superuser exists)
+    # First-time setup page (only shown if no superuser exists)
     path('setup/', first_time_setup, name='setup'),
-
 
 ]
 
