@@ -1,12 +1,11 @@
+from datetime import timedelta
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, F
 from django.utils import timezone
-from datetime import timedelta
+from django.db.models import Sum, F
 from orders.models import Order
-from payments.models import CreditSale
 from inventory.models import Stock
-
+from payments.models import CreditSale  # adjust if CreditSale is in different app
 
 @login_required
 def home(request):
@@ -42,11 +41,12 @@ def home(request):
             'low_stock_items': low_stock_items,
             'low_stock_count': low_stock_items.count(),
             'recent_orders': recent_orders,
-            'user_role': user.role,  # for template conditional
+            'user_role': user.role,
+            'title': 'Cafeteria POS Dashboard',
         }
 
     else:
-        # Waiter dashboard - limited stats (no full sales visibility)
+        # Waiter/Cashier dashboard - limited stats (no full sales visibility)
         waiter_orders_today = Order.objects.filter(
             waiter=user,
             created_at__gte=today_start
@@ -56,33 +56,7 @@ def home(request):
             'orders_today': waiter_orders_today.count(),
             'recent_orders': waiter_orders_today.order_by('-created_at')[:10],
             'user_role': user.role,
+            'title': 'Cafeteria POS Dashboard',
         }
 
     return render(request, 'dashboard/home.html', context)
-
-
-# dashboard/views.py (or orders/views.py)
-
-from django.contrib.auth import get_user_model
-from django.http import HttpResponse
-
-
-def temp_create_superuser(request):
-    User = get_user_model()
-    username = "christa"
-
-    if User.objects.filter(username=username).exists():
-        return HttpResponse(f"Superuser '{username}' already exists. You can log in now.")
-
-    try:
-        User.objects.create_superuser(
-            username=username,
-            email="larrykalama8@gmail.com",
-            password="#Lenny254."
-        )
-        return HttpResponse(f"Superuser '{username}' created successfully!<br>"
-                            f"Username: christa<br>"
-                            f"Password: #Lenny254.<br>"
-                            f"You can now <a href='/accounts/login/'>log in</a>.")
-    except Exception as e:
-        return HttpResponse(f"Error creating superuser: {str(e)}")
