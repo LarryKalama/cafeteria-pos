@@ -1,13 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.views.decorators.http import require_http_methods
 from .models import User
 from .forms import LoginForm, UserCreateForm, UserUpdateForm
-from django.contrib.auth import login
-from django.contrib import messages
 from django.contrib.auth import get_user_model
-
+from django.shortcuts import render, redirect
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
 User = get_user_model()
 
 def first_time_setup(request):
@@ -72,19 +72,23 @@ def is_superadmin(user):
     """Check if user is superadmin"""
     return user.is_authenticated and user.role == 'SUPERADMIN'
 
+
 @require_http_methods(["GET", "POST"])
 def login_view(request):
-    """Login page"""
+    """
+    Custom login page with form validation and role-based redirect.
+    """
+    # If already logged in → redirect to dashboard
     if request.user.is_authenticated:
         return redirect('dashboard:home')
-    
+
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user = authenticate(request, username=username, password=password)
-            
+
             if user is not None:
                 if user.is_active:
                     login(request, user)
@@ -96,10 +100,8 @@ def login_view(request):
                 messages.error(request, 'Invalid username or password.')
     else:
         form = LoginForm()
-    
+
     return render(request, 'accounts/login.html', {'form': form})
-
-
 @login_required
 def logout_view(request):
     """Logout user"""
