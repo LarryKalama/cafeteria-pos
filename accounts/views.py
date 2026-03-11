@@ -75,15 +75,14 @@ def is_superadmin(user):
 
 @require_http_methods(["GET", "POST"])
 def login_view(request):
-    """
-    Custom login page with form validation and role-based redirect.
-    """
-    # If already logged in → redirect to dashboard
+    """Custom login page with form validation and redirect after success."""
+    # Redirect already logged-in users
     if request.user.is_authenticated:
         return redirect('dashboard:home')
 
+    form = LoginForm(request.POST or None)
+
     if request.method == 'POST':
-        form = LoginForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
@@ -92,15 +91,17 @@ def login_view(request):
             if user is not None:
                 if user.is_active:
                     login(request, user)
-                    messages.success(request, f'Welcome back, {user.get_full_name()}!')
+                    messages.success(request, f'Welcome back, {user.get_full_name() or username}!')
+                    # Force redirect - this is the critical line
                     return redirect('dashboard:home')
                 else:
-                    messages.error(request, 'Your account has been disabled.')
+                    messages.error(request, 'Your account has been disabled. Contact support.')
             else:
                 messages.error(request, 'Invalid username or password.')
-    else:
-        form = LoginForm()
+        else:
+            messages.error(request, 'Please correct the errors below.')
 
+    # GET or invalid POST → show form with errors
     return render(request, 'accounts/login.html', {'form': form})
 @login_required
 def logout_view(request):
