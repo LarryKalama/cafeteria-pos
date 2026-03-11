@@ -28,6 +28,9 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['cafeteria-pos-8txb.onrender.com', 'localhost', '127.0.0.1']
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://cafeteria-pos-8txb.onrender.com"
+]
 
 # Application definition
 
