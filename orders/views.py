@@ -17,11 +17,11 @@ def create_order(request):
                 customer_name = request.POST.get('customer_name', '')
                 table_number = request.POST.get('table_number', '')
                 cart_data = json.loads(request.POST.get('cart_data', '[]'))
-                
+
                 if not cart_data:
                     messages.error(request, 'Cart is empty!')
                     return redirect('orders:create')
-                
+
                 # Create order
                 order = Order.objects.create(
                     waiter=request.user,
@@ -29,7 +29,7 @@ def create_order(request):
                     table_number=table_number,
                     status='PENDING'
                 )
-                
+
                 # Add items
                 for item in cart_data:
                     menu_item = MenuItem.objects.get(id=item['id'])
@@ -45,11 +45,11 @@ def create_order(request):
 
                 messages.success(request, f'Order #{order.order_number} created successfully!')
                 return redirect('orders:order_detail', pk=order.pk)
-                
+
         except Exception as e:
             messages.error(request, f'Error creating order: {str(e)}')
             return redirect('orders:create_order')
-    
+
     # GET request - show menu
     categories = Category.objects.filter(is_active=True).prefetch_related('items')
     return render(request, 'orders/create_order.html', {
@@ -60,16 +60,16 @@ def create_order(request):
 def order_list(request):
     """List all orders"""
     orders = Order.objects.select_related('waiter').order_by('-created_at')
-    
+
     # Filter by status
     status = request.GET.get('status')
     if status:
         orders = orders.filter(status=status)
-    
+
     # Filter by waiter (non-superadmins see only their orders)
     if not request.user.is_superadmin:
         orders = orders.filter(waiter=request.user)
-    
+
     return render(request, 'orders/order_list.html', {'orders': orders})
 
 
@@ -305,3 +305,82 @@ def process_payment(request, pk):
 
     # GET request → redirect back (should not happen if form is correct)
     return redirect('orders:order_detail', order.pk)
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.urls import reverse
+from payments.models import CreditCustomer
+from .models import Order
+
+@login_required
+def order_detail(request, pk):
+    """Order details page with payment integration."""
+    order = get_object_or_404(Order, pk=pk)
+
+    # Permissions: non-superadmins can only view their own orders
+    if not request.user.is_superadmin and order.waiter != request.user:
+        messages.error(request, "You can only view your own orders!")
+        return redirect('orders:order_list')
+
+    # Fetch credit customers for payment form
+    credit_customers = CreditCustomer.objects.all().order_by("name")
+
+    # Build URLs for payment actions
+    context = {
+        "order": order,
+        "credit_customers": credit_customers,  # for dropdown in template
+        "process_payment_url": reverse("orders:process_payment", args=[order.pk]),
+        "initiate_mpesa_url": reverse("orders:initiate_mpesa_payment", args=[order.pk]),
+        "mark_paid_cash_url": reverse("orders:mark_paid_cash", args=[order.pk]),
+        "wait_for_mpesa_url": reverse("orders:wait_for_mpesa_payment", args=[order.pk]),
+    }
+
+    return render(request, "orders/order_detail.html", context)
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from orders.models import Order
+from payments.models import Payment
+
+@csrf_exempt
+@require_POST
+def sync_offline(request):
+    try:
+        data = json.loads(request.body)
+        actions = data.get('actions', [])
+
+        for action in actions:
+            if action['type'] == 'create_order':
+                # Create order locally
+                order = Order.objects.create(
+                    # map fields from action['data']
+                    customer_name=action['data']['customer_name'],
+                    table_number=action['data']['table_number'],
+                    waiter=request.user,
+                    total=action['data']['total'],
+                    status='PENDING',
+                    created_at=action['data']['timestamp']
+                )
+                # Add items if sent
+
+            elif action['type'] == 'cash_payment':
+                order = Order.objects.get(pk=action['data']['order_id'])
+                Payment.objects.create(
+                    order=order,
+                    amount=order.total,
+                    payment_method='CASH',
+                    amount_tendered=action['data']['amount_tendered'],
+                    change_given=action['data']['change'],
+                    processed_by=request.user,
+                    status='COMPLETED'
+                )
+                order.status = 'COMPLETED'
+                order.save()
+
+            # Add credit sale case...
+
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'errors': str(e)}, status=400)
