@@ -89,13 +89,14 @@ WSGI_APPLICATION = 'pos.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# Database configuration - uses Railway's DATABASE_URL automatically
 import dj_database_url
-import os
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')
+        default='sqlite:///db.sqlite3',  # fallback for local dev
+        conn_max_age=600,               # keep connections alive
+        ssl_require=False               # Railway uses secure connections
     )
 }
 
