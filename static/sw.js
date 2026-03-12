@@ -1,48 +1,72 @@
-// Service Worker for Cafeteria POS PWA
-// Caches essential static assets for offline support
+const CACHE_NAME = 'cafeteria-pos-v4'; // bump version to force update
 
-const CACHE_NAME = 'cafeteria-pos-v1';
-
-// List of files to cache on install
-// IMPORTANT: Do NOT cache Bootstrap here - it's loaded from CDN
+// Static assets + entry points to cache on install
 const urlsToCache = [
-  '/',                              // Root page
-  '/static/manifest.json',          // PWA manifest
-  '/static/images/favicon.png',     // Favicon
-  // Add more local files as needed (custom CSS, images, offline pages, etc.)
-  // Example:
-  // '/static/css/custom.css',
-  // '/static/js/custom.js',
-  // '/offline.html'   // optional offline fallback page
+  '/',                              // homepage
+  '/static/manifest.json',
+  '/static/sw.js',
+  '/static/images/favicon.png',
+  '/static/images/icon-192.png',
+  '/static/images/icon-512.png',
+  '/static/images/offline.png',
+  '/accounts/login/',
+  '/dashboard/home/',
+  '/orders/list/',
+  '/orders/create/',
+  '/menu/items/',
+  '/offline.html'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache:', CACHE_NAME);
-        return cache.addAll(urlsToCache);
-      })
-      .catch(error => {
-        console.error('Cache addAll failed:', error);
-      })
+      .then(cache => cache.addAll(urlsToCache))
+      .then(() => self.skipWaiting())
+      .catch(err => console.error('Cache install failed:', err))
+  );
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.filter(key => key !== CACHE_NAME)
+            .map(key => caches.delete(key))
+      );
+    }).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', event => {
+  // Skip non-GET requests and non-http(s) requests
+  if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
-      .then(response => {
-        // Return from cache if found
-        if (response) {
-          return response;
-        }
+      .then(cachedResponse => {
+        if (cachedResponse) return cachedResponse;
 
-        // Otherwise fetch from network
-        return fetch(event.request).catch(() => {
-          // Optional: fallback to offline page or message
-          // return caches.match('/offline.html');
-          console.warn('Fetch failed, possibly offline:', event.request.url);
+        return fetch(event.request).then(networkResponse => {
+          // Only cache successful responses
+          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+            return networkResponse;
+          }
+
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => cache.put(event.request, responseToCache));
+
+          return networkResponse;
+        }).catch(() => {
+          // Fallback to offline page for HTML requests
+          if (event.request.headers.get('accept').includes('text/html')) {
+            return caches.match('/offline.html');
+          }
+          // For other requests (images, etc.) → fail silently
+          return new Response('', { status: 503 });
         });
       })
   );

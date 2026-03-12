@@ -1,10 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block title %}Offline – Cafeteria POS{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="card mx-auto shadow-lg" style="max-width: 500px; border-radius: 20px;">
+        <div class="card-header bg-warning text-dark py-4">
+            <h2 class="mb-0">
+                <i class="bi bi-wifi-off me-3"></i> Offline Mode
+            </h2>
+        </div>
+        <div class="card-body py-5">
+            <img src="{% static 'images/offline.png' %}" alt="Offline" class="img-fluid mb-4" style="max-height: 180px;">
+            <h4 class="mb-4 text-muted">No Internet Connection</h4>
+            <p class="lead mb-4">
+                You can still create new orders and record cash/credit payments.
+            </p>
+            <p class="text-muted mb-4">
+                All new data is saved locally and will be sent to the server automatically when you are back online.
+            </p>
+            <div class="d-grid gap-3 col-8 mx-auto">
+                <a href="/" class="btn btn-lg btn-warning">
+                    <i class="bi bi-arrow-repeat me-2"></i> Try Again
+                </a>
+                <a href="{% url 'orders:create_order' %}" class="btn btn-lg btn-success">
+                    <i class="bi bi-cart-plus me-2"></i> Create New Order Offline
+                </a>
+            </div>
+        </div>
+        <div class="card-footer text-muted py-3">
+            © 2026 CAFETERIA POS • Nairobi, Kenya
+        </div>
+    </div>
+</div>
+{% endblock %}
