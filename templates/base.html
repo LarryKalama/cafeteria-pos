@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}CAFETERIA POS{% endblock %}</title>
 
+    <!-- PWA Manifest & Meta Tags -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#FFD700">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
     <link rel="shortcut icon" type="image/png" href="{% static 'images/favicon.png' %}">
 
@@ -131,6 +138,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+
     {% if user.is_authenticated %}
     <nav class="navbar navbar-expand-lg navbar-dark mb-4">
         <div class="container-fluid">
@@ -180,7 +188,7 @@
                     </li>
                     {% endif %}
 
-                    <!-- Quick-add Expense (same as New Order style) -->
+                    <!-- Quick-add Expense -->
                     {% if perms.can_manage_expenses or user.role in 'SUPERADMIN CASHIER WAITER' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'expenses:expense_add' %}">
@@ -189,7 +197,7 @@
                     </li>
                     {% endif %}
 
-                    <!-- Reports link - different for superadmin vs cashier/waiter -->
+                    <!-- Reports link -->
                     {% if user.role == 'SUPERADMIN' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'reports:sales_report' %}">
@@ -215,7 +223,6 @@
                             <li><a class="dropdown-item" href="{% url 'inventory:stock_list' %}">Inventory</a></li>
                             <li><a class="dropdown-item" href="{% url 'payments:credit_customer_list' %}">Credit Customers</a></li>
                             <li><a class="dropdown-item" href="{% url 'accounts:user_list' %}">Users</a></li>
-                            <!-- Add more superadmin-only links here if needed -->
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -267,8 +274,23 @@
 
     {% block extra_js %}{% endblock %}
 
+    <!-- PWA Service Worker Registration -->
     <script>
-        // Auto-hide alerts after 5 seconds
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('{% static "sw.js" %}')
+                .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch(error => {
+                    console.log('Service Worker registration failed:', error);
+                });
+        });
+    }
+    </script>
+
+    <!-- Auto-hide alerts after 5 seconds -->
+    <script>
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(function(alert) {
