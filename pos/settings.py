@@ -26,16 +26,9 @@ SECRET_KEY = 'django-insecure-(4hx6evtz+*fgn^d-%c8*d=u3e3%w*+513ltf)xd3u+_j%1#fi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    'cafeteria-pos-8txb.onrender.com',
-]
+ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://cafeteria-pos-8txb.onrender.com"
-]
-
+CSRF_TRUSTED_ORIGINS = ['https://*.up.railway.app', 'http://localhost:8000']
 # Application definition
 
 INSTALLED_APPS = [
@@ -196,3 +189,22 @@ MPESA_PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c91
 
 # For callbacks (must be public URL in production)
 MPESA_CALLBACK_URL = 'https://dollie-exosporous-ricardo.ngrok-free.dev/mpesa/callback/'   # use ngrok in dev
+
+SECURE_SSL_REDIRECT = False  # temporary - Railway handles HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}
