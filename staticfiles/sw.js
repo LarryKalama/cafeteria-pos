@@ -1,19 +1,24 @@
 // Service Worker for Cafeteria POS PWA
-// Caches essential static assets for offline support
+// Version: v7 - includes offline fallback page
 
-const CACHE_NAME = 'cafeteria-pos-v1';
+const CACHE_NAME = 'cafeteria-pos-v7';
 
-// List of files to cache on install
-// IMPORTANT: Do NOT cache Bootstrap here - it's loaded from CDN
+// Files to cache on install (static assets + key pages)
 const urlsToCache = [
-  '/',                              // Root page
-  '/static/manifest.json',          // PWA manifest
-  '/static/images/favicon.png',     // Favicon
-  // Add more local files as needed (custom CSS, images, offline pages, etc.)
-  // Example:
-  // '/static/css/custom.css',
-  // '/static/js/custom.js',
-  // '/offline.html'   // optional offline fallback page
+  '/',                              // Homepage
+  '/static/manifest.json',
+  '/static/sw.js',
+  '/static/images/favicon.png',
+  '/static/images/icon-192.png',
+  '/static/images/icon-512.png',
+  '/offline.html',                  // Fallback page (must be here!)
+  // Key dynamic pages (cached on first visit)
+  '/accounts/login/',
+  '/dashboard/home/',
+  '/orders/list/',
+  '/orders/create/',
+  '/menu/items/'
+  // Add more later if needed (e.g. '/inventory/', '/expenses/', etc.)
 ];
 
 self.addEventListener('install', event => {
@@ -21,28 +26,44 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache:', CACHE_NAME);
+        console.log('Caching files:', urlsToCache);
         return cache.addAll(urlsToCache);
       })
-      .catch(error => {
-        console.error('Cache addAll failed:', error);
-      })
+      .then(() => self.skipWaiting())
+      .catch(err => console.error('Cache install failed:', err))
+  );
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.filter(key => key !== CACHE_NAME)
+            .map(key => caches.delete(key))
+      );
+    }).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', event => {
+  // Skip non-GET or non-http(s) requests
+  if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
-      .then(response => {
-        // Return from cache if found
-        if (response) {
-          return response;
+      .then(cachedResponse => {
+        // Return from cache if available
+        if (cachedResponse) {
+          return cachedResponse;
         }
 
-        // Otherwise fetch from network
+        // Try network
         return fetch(event.request).catch(() => {
-          // Optional: fallback to offline page or message
-          // return caches.match('/offline.html');
-          console.warn('Fetch failed, possibly offline:', event.request.url);
+          // Always fallback to offline.html when offline
+          return caches.match('/offline.html');
         });
       })
   );

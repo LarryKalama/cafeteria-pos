@@ -1,16 +1,237 @@
-{% extends 'base.html' %}
 
-{% block title %}Order #{{ order.order_number }} - Cafeteria POS{% endblock %}
 
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order #ORD-20260311-003 - Cafeteria POS</title>
+
+    <link rel="icon" type="image/png" href="/static/images/favicon.png">
+    <link rel="shortcut icon" type="image/png" href="/static/images/favicon.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --gold: #FFD700;
+            --gold-dark: #DAA520;
+            --gold-light: #FFF8DC;
+            --dark: #1a1a1a;
+            --gray: #6c757d;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: linear-gradient(135deg, var(--dark) 0%, #2d2d2d 100%);
+            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
+        }
+
+        .navbar-brand {
+            color: var(--gold) !important;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .nav-link {
+            color: #fff !important;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            color: var(--gold) !important;
+            transform: translateY(-2px);
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark);
+            font-weight: bold;
+            border-radius: 15px 15px 0 0 !important;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: none;
+            color: var(--dark);
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        /* Stats cards */
+        .stat-card {
+            background: linear-gradient(135deg, var(--gold-light) 0%, #fff 100%);
+            border-left: 4px solid var(--gold);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            color: var(--gold-dark);
+        }
+
+        /* Tables */
+        .table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark);
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: var(--gold-light);
+        }
+
+        /* Alerts */
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+            }
+            .navbar, .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+
+
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <img src="/static/images/favicon.png" width="30" height="30" class="d-inline-block align-top me-2 rounded-circle" alt="">
+                CAFETERIA POS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-house"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <!-- Everyone (logged in) -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="/orders/create/">
+                            <i class="bi bi-cart-plus"></i> New Order
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/orders/list/">
+                            <i class="bi bi-receipt"></i> Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/menu/items/">
+                            <i class="bi bi-book"></i> Menu
+                        </a>
+                    </li>
+
+                    <!-- Waiter + Cashier + Superadmin -->
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory/">
+                            <i class="bi bi-box-seam"></i> Stock
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/expenses/">
+                            <i class="bi bi-receipt-cutoff"></i> Expenses
+                        </a>
+                    </li>
+
+
+                    <!-- Quick-add Expense (same as New Order style) -->
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/expenses/add/">
+                            <i class="bi bi-plus-circle"></i> Expense
+                        </a>
+                    </li>
+
+
+                    <!-- Reports link - different for superadmin vs cashier/waiter -->
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reports/today/">
+                            <i class="bi bi-list-check"></i> Today's Summary
+                        </a>
+                    </li>
+
+
+                    <!-- Only Superadmin -->
+
+                </ul>
+
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> larry
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/accounts/profile/">Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/accounts/logout/">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+
+
+
+    <main>
+
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="text-white">
-            <i class="bi bi-receipt"></i> Order #{{ order.order_number }}
+            <i class="bi bi-receipt"></i> Order #ORD-20260311-003
         </h3>
         <div>
-            <span class="badge bg-{{ order.status|lower }} fs-5 px-3 py-2">
-                {{ order.get_status_display }}
+            <span class="badge bg-pending fs-5 px-3 py-2">
+                Pending
             </span>
         </div>
     </div>
@@ -28,14 +249,14 @@
                 <div class="card-body">
                     <div class="row mb-3">
                         <div class="col-6">
-                            <p class="mb-1"><strong>Customer:</strong> {{ order.customer_name|default:"Walk-in" }}</p>
-                            <p class="mb-1"><strong>Table:</strong> {{ order.table_number|default:"-" }}</p>
-                            <p class="mb-1"><strong>Waiter:</strong> {{ order.waiter.get_full_name|default:order.waiter.username }}</p>
+                            <p class="mb-1"><strong>Customer:</strong> Walk-in</p>
+                            <p class="mb-1"><strong>Table:</strong> -</p>
+                            <p class="mb-1"><strong>Waiter:</strong> larry</p>
                         </div>
                         <div class="col-6 text-end">
-                            <h5 class="text-success mb-1">Total: KSh {{ order.total|floatformat:0 }}</h5>
+                            <h5 class="text-success mb-1">Total: KSh 40</h5>
                             <p class="text-muted mb-0">
-                                Created: {{ order.created_at|date:"d M Y H:i" }}
+                                Created: 11 Mar 2026 20:40
                             </p>
                         </div>
                     </div>
@@ -52,34 +273,27 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for item in order.items.all %}
+
                                 <tr>
                                     <td>
-                                        <strong>{{ item.menu_item.name }}</strong>
-                                        {% if item.notes %}
-                                            <br><small class="text-muted">{{ item.notes }}</small>
-                                        {% endif %}
+                                        <strong>Soda 300ml</strong>
+
                                     </td>
-                                    <td class="text-center">{{ item.quantity }}</td>
-                                    <td class="text-end">KSh {{ item.unit_price|floatformat:0 }}</td>
-                                    <td class="text-end">KSh {{ item.total|floatformat:0 }}</td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-end">KSh 40</td>
+                                    <td class="text-end">KSh 40</td>
                                 </tr>
-                                {% endfor %}
+
                             </tbody>
                             <tfoot class="table-light">
                                 <tr>
                                     <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
-                                    <td class="text-end"><strong>KSh {{ order.subtotal|floatformat:0 }}</strong></td>
+                                    <td class="text-end"><strong>KSh 40</strong></td>
                                 </tr>
-                                {% if order.tax > 0 %}
-                                <tr>
-                                    <td colspan="3" class="text-end">Tax:</td>
-                                    <td class="text-end">KSh {{ order.tax|floatformat:0 }}</td>
-                                </tr>
-                                {% endif %}
+
                                 <tr class="fw-bold">
                                     <td colspan="3" class="text-end">Total to Pay:</td>
-                                    <td class="text-end text-success">KSh {{ order.total|floatformat:0 }}</td>
+                                    <td class="text-end text-success">KSh 40</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -90,7 +304,7 @@
 
         <!-- Right Column: Payment Method -->
         <div class="col-lg-5">
-            {% if order.status == 'PENDING' %}
+
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-warning text-dark">
                     <h5 class="mb-0">
@@ -98,8 +312,8 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form method="post" action="{% url 'orders:process_payment' order.pk %}">
-                        {% csrf_token %}
+                    <form method="post" action="/orders/order/32/process-payment/">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="0vxUHOKjGXYVVonr18PGdEGZxiJ8DFhLgddKBQgWOVlzlGLHV8jVmOyzE1Ie8izP">
 
                         <h6 class="mb-3">Select Payment Method:</h6>
 
@@ -119,7 +333,7 @@
                         <div id="cash-fields" class="payment-fields">
                             <div class="mb-3">
                                 <label class="form-label">Amount Tendered (KSh)</label>
-                                <input type="number" name="amount_tendered" class="form-control" min="{{ order.total }}" step="0.01" required>
+                                <input type="number" name="amount_tendered" class="form-control" min="40.00" step="0.01" required>
                             </div>
                             <small class="text-muted">Change will be calculated automatically</small>
                         </div>
@@ -143,76 +357,25 @@
 
                         <div class="d-grid mt-4">
                             <button type="submit" class="btn btn-lg btn-success">
-                                <i class="bi bi-check-circle"></i> Complete Payment - KSh {{ order.total|floatformat:0 }}
+                                <i class="bi bi-check-circle"></i> Complete Payment - KSh 40
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
-            {% endif %}
+
 
             <!-- Payment History -->
-            {% if order.payments.exists %}
-            <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0"><i class="bi bi-credit-card"></i> Payment Details</h5>
-                </div>
-                <div class="card-body">
-                    {% for payment in order.payments.all %}
-                    <div class="mb-3 border-bottom pb-3">
-                        <div class="d-flex justify-content-between mb-2">
-                            <strong>{{ payment.get_payment_method_display }}</strong>
-                            <span class="text-success">KSh {{ payment.amount|floatformat:0 }}</span>
-                        </div>
 
-                        {% if payment.payment_method == 'CASH' and payment.change_given %}
-                        <small class="text-muted">
-                            Tendered: KSh {{ payment.amount_tendered|floatformat:0 }}<br>
-                            Change: KSh {{ payment.change_given|floatformat:0 }}
-                        </small>
-                        {% endif %}
-
-                        {% if payment.payment_method == 'MPESA' %}
-                        <small class="text-muted">
-                            Code: {{ payment.mpesa_transaction_code|default:"-" }}<br>
-                            Phone: {{ payment.mpesa_phone_number|default:"-" }}
-                        </small>
-                        {% endif %}
-
-                        {% if payment.payment_method == 'CREDIT' %}
-                        <small class="text-muted">
-                            Customer: {{ payment.credit_customer.name|default:"-" }}
-                        </small>
-                        {% endif %}
-
-                        <hr class="my-2">
-                        <small class="text-muted">
-                            Processed by: {{ payment.processed_by.get_full_name|default:payment.processed_by.username }}<br>
-                            Time: {{ payment.created_at|date:"M d, Y H:i" }}
-                        </small>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
         </div>
     </div>
 
     <!-- Receipt & Kitchen Ticket (after completion) -->
-    {% if order.status == 'COMPLETED' %}
-    <div class="text-center mt-5">
-        <a href="{% url 'orders:receipt' order.pk %}" target="_blank" class="btn btn-primary btn-lg me-3">
-            <i class="bi bi-printer"></i> Print Receipt
-        </a>
-        <a href="{% url 'orders:kitchen_ticket' order.pk %}" target="_blank" class="btn btn-outline-primary btn-lg">
-            <i class="bi bi-printer"></i> Kitchen Ticket
-        </a>
-    </div>
-    {% endif %}
+
 
     <!-- Back button -->
     <div class="text-center mt-4">
-        <a href="{% url 'orders:order_list' %}" class="btn btn-outline-light">
+        <a href="/orders/list/" class="btn btn-outline-light">
             <i class="bi bi-arrow-left"></i> Back to Orders
         </a>
     </div>
@@ -251,4 +414,22 @@ document.addEventListener('DOMContentLoaded', function() {
     .badge.bg-completed { background-color: #6c757d !important; }
     .badge.bg-cancelled { background-color: #dc3545 !important; }
 </style>
-{% endblock %}
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -18,4 +18,6 @@ urlpatterns = [
     path('order/<int:pk>/pay-cash/', views.mark_paid_cash, name='mark_paid_cash'),
     path('order/<int:pk>/process-payment/', views.process_payment, name='process_payment'),
 #path('order/<int:pk>/process-payment/', views.process_payment, name='process_payment'),
+# NEW: Offline sync endpoint
+    path('api/sync-offline/', views.sync_offline, name='sync_offline'),
 ]

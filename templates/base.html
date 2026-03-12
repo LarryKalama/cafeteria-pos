@@ -163,9 +163,12 @@
                             <i class="bi bi-cart-plus"></i> New Order
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item position-relative">
                         <a class="nav-link" href="{% url 'orders:order_list' %}">
                             <i class="bi bi-receipt"></i> Orders
+                            <span id="pending-sync-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none; font-size: 0.7rem; min-width: 1.3rem; padding: 0.2rem 0.4rem;">
+                                0
+                            </span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -288,6 +291,9 @@
         });
     }
     </script>
+
+    <!-- Offline Queue & Sync Script -->
+    <script src="{% static 'js/offline-queue.js' %}"></script>
 
     <!-- Auto-hide alerts after 5 seconds -->
     <script>
