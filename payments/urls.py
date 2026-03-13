@@ -40,4 +40,6 @@ urlpatterns = [
         views.credit_sale_detail,
         name="credit_sale_detail"
     ),
+    path('initiate-stk/<int:order_id>/', views.initiate_stk_push, name='initiate_stk_push'),
+    path('mpesa-callback/', views.mpesa_callback, name='mpesa_callback'),
 ]

@@ -103,12 +103,14 @@ def login_view(request):
 
     # GET or invalid POST → show form with errors
     return render(request, 'accounts/login.html', {'form': form})
-@login_required
-def logout_view(request):
-    """Logout user"""
+
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+
+def custom_logout(request):
     logout(request)
-    messages.info(request, 'You have been logged out successfully.')
-    return redirect('accounts:login')
+    return redirect(reverse_lazy('accounts:login'))
 
 
 @login_required

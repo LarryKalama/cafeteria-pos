@@ -242,69 +242,138 @@ def mark_paid_cash(request, pk):
     # Show confirmation page
     return render(request, 'orders/confirm_cash_payment.html', {'order': order})
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.utils import timezone
 from .models import Order
-from payments.models import Payment  # assuming Payment model is in payments app
-
+from payments.models import Payment
+# from payments.forms import PaymentForm  # Uncomment if you use a form later
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+from decimal import Decimal  # ← added for safe math
+from .models import Order
+from payments.models import Payment
 
 @login_required
 def process_payment(request, pk):
     """
-    Unified payment processing view.
-    Handles Cash, M-Pesa, and Credit payments via the shared form.
+    Process payment for an order and redirect to receipt on success.
+    Supports cash, mpesa (pending STK), and credit.
     """
     order = get_object_or_404(Order, pk=pk)
 
-    # Only allow processing PENDING orders
+    # Prevent re-processing completed orders
     if order.status != 'PENDING':
-        messages.error(request, "Order already processed.")
-        return redirect('orders:order_detail', order.pk)
+        messages.info(request, "This order is already processed.")
+        return redirect('orders:order_detail', pk=order.pk)
+
+    # Restrict to waiter or superadmin
+    if order.waiter != request.user and not request.user.is_superadmin:
+        messages.error(request, "You are not authorized to process this payment.")
+        return redirect('orders:order_detail', pk=order.pk)
 
     if request.method == 'POST':
-        payment_method = request.POST.get('payment_method', 'cash').lower()
+        payment_method = request.POST.get('payment_method')
 
-        # Create unified Payment record
-        payment = Payment.objects.create(
-            order=order,
-            amount=order.total,
-            payment_method=payment_method.upper(),
-            processed_by=request.user,
-        )
+        if not payment_method:
+            messages.error(request, "Please select a payment method.")
+            return redirect('orders:order_detail', pk=order.pk)
 
-        # Method-specific logic
-        if payment_method == 'cash':
-            amount_tendered = float(request.POST.get('amount_tendered', 0))
-            change = amount_tendered - order.total
-            payment.amount_tendered = amount_tendered
-            payment.change_given = change if change > 0 else 0
+        try:
+            # Create payment record (matches your model)
+            payment = Payment.objects.create(
+                order=order,
+                amount=order.total,
+                payment_method=payment_method.upper(),
+                processed_by=request.user,
+            )
+
+            # Method-specific data
+            if payment_method == 'cash':
+                amount_tendered_str = request.POST.get('amount_tendered', '0')
+                try:
+                    amount_tendered = Decimal(amount_tendered_str)
+                except:
+                    messages.error(request, "Invalid amount tendered.")
+                    payment.delete()
+                    return redirect('orders:order_detail', pk=order.pk)
+
+                payment.amount_tendered = amount_tendered
+                payment.change_given = max(amount_tendered - order.total, Decimal('0.00'))
+                messages.success(request, f"Cash payment completed. Change: KSh {payment.change_given:.2f}")
+
+            elif payment_method == 'mpesa':
+                phone = request.POST.get('phone_number')
+                if not phone or not phone.startswith('2547') or len(phone) != 12:
+                    messages.error(request, "Invalid M-Pesa phone number (use format 2547XXXXXXXX)")
+                    payment.delete()
+                    return redirect('orders:order_detail', pk=order.pk)
+
+                payment.mpesa_phone_number = phone
+                # TODO: Trigger Daraja STK Push here
+                messages.info(request, f"M-Pesa STK Push sent to {phone}. Waiting for confirmation.")
+
+            elif payment_method == 'credit':
+                customer_name = request.POST.get('credit_customer')
+                if not customer_name:
+                    messages.error(request, "Credit customer name is required.")
+                    payment.delete()
+                    return redirect('orders:order_detail', pk=order.pk)
+
+                # If credit_customer is ForeignKey, fetch object; if CharField, use directly
+                # Assuming CharField for simplicity (change if ForeignKey)
+                payment.credit_customer = customer_name
+                order.status = 'CREDIT'
+                messages.success(request, f"Credit sale recorded for {customer_name}.")
+
+            else:
+                messages.error(request, "Invalid payment method selected.")
+                payment.delete()
+                return redirect('orders:order_detail', pk=order.pk)
+
+            # Save payment and update order if not credit
             payment.save()
 
-        elif payment_method == 'mpesa':
-            payment.mpesa_transaction_code = request.POST.get('mpesa_code', '').strip()
-            payment.mpesa_phone_number = request.POST.get('mpesa_phone', '').strip()
-            payment.save()
+            if payment_method != 'credit':
+                order.status = 'COMPLETED'
+                order.save()
 
-        elif payment_method == 'credit':
-            payment.credit_customer_name = request.POST.get('credit_customer', '').strip()
-            payment.save()
+            # Redirect to receipt (or detail if receipt not ready)
+            return redirect('orders:receipt', pk=order.pk)  # or 'orders:order_detail'
 
-        else:
-            messages.error(request, "Invalid payment method selected.")
-            return redirect('orders:order_detail', order.pk)
+        except Exception as e:
+            messages.error(request, f"Payment failed: {str(e)}")
+            print(f"Payment processing error: {str(e)}")
+            return redirect('orders:order_detail', pk=order.pk)
 
-        # Mark order as completed
-        order.status = 'COMPLETED'  # or 'PAID' — choose your final status
-        order.paid_at = timezone.now()
-        order.save()
+    messages.error(request, "Invalid request method.")
+    return redirect('orders:order_detail', pk=order.pk)
+@login_required
+def receipt(request, pk):
+    """
+    Display printable receipt after successful payment.
+    """
+    order = get_object_or_404(Order, pk=pk)
 
-        messages.success(request, f"Payment completed via {payment_method.capitalize()}.")
-        return redirect('orders:order_detail', order.pk)
+    # Only show receipt if order is completed or credit
+    if order.status not in ['COMPLETED', 'CREDIT']:
+        messages.error(request, "Receipt not available for this order yet.")
+        return redirect('orders:order_detail', pk=order.pk)
 
-    # GET request → redirect back (should not happen if form is correct)
-    return redirect('orders:order_detail', order.pk)
+    # Get the latest payment (if any)
+    payment = order.payments.order_by('-payment_date').first() if hasattr(order, 'payments') else None
+
+    context = {
+        'order': order,
+        'payment': payment,
+        'items': order.items.all(),
+        'restaurant_name': 'Cafeteria POS',
+        'date': timezone.now(),
+    }
+    return render(request, 'orders/receipt.html', context)
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required

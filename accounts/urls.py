@@ -14,7 +14,7 @@ path("login/", auth_views.LoginView.as_view(
     ), name="login"),
 
     # All other paths - unchanged
-path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path('logout/', views.custom_logout, name='logout'),
     path('profile/', views.profile_view, name='profile'),
     path('users/', views.user_list, name='user_list'),
     path('users/create/', views.user_create, name='user_create'),

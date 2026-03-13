@@ -186,7 +186,7 @@ MPESA_SHORTCODE = '174379'   # e.g. 123456
 MPESA_PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
 
 # For callbacks (must be public URL in production)
-MPESA_CALLBACK_URL = 'https://dollie-exosporous-ricardo.ngrok-free.dev/mpesa/callback/'   # use ngrok in dev
+MPESA_CALLBACK_URL = ' https://dollie-exosporous-ricardo.ngrok-free.dev/mpesa/callback/'   # use ngrok in dev
 
 SECURE_SSL_REDIRECT = False  # temporary - Railway handles HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
