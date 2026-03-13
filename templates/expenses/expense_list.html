@@ -117,7 +117,13 @@
                             <td>{{ exp.display_category }}</td>
                             <td>{{ exp.description|truncatewords:10|default:"-" }}</td>
                             <td>{{ exp.amount|floatformat:0 }}</td>
-                            <td>{{ exp.paid_by.get_full_name|default:exp.paid_by.username|default:"-" }}</td>
+                            <td>
+                                {% if exp.paid_by %}
+                                    {{ exp.paid_by.get_full_name|default:exp.paid_by.username|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
                             <td>
                                 {% if perms.can_manage_expenses or user.role == 'SUPERADMIN' %}
                                 <a href="{% url 'expenses:expense_edit' exp.pk %}" class="btn btn-sm btn-warning">
