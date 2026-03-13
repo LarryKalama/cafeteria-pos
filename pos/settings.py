@@ -52,8 +52,19 @@ INSTALLED_APPS = [
     'reports',
     'dashboard',
     'expenses',
+    'cloudinary',
 ]
 
+# Cloudinary settings (use your real credentials)
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': ' dxfk7gjmq',
+    'API_KEY': '374373413524738',
+    'API_SECRET': 'ZYJdiJSdnZ2yXy5zExWkkFJ3yTI',
+}
+
+# Media goes to Cloudinary
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+MEDIA_URL = 'https://res.cloudinary.com/dxfk7gjmq/image/upload/'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Critical for static files on Railway
