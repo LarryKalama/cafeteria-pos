@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,6 +30,7 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = ['https://*.up.railway.app', 'http://localhost:8000']
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -54,15 +56,13 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Critical for static files on Railway
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-
     # First-time setup middleware - redirects to /setup/ if no superuser exists
     #'pos.middleware.FirstTimeSetupMiddleware',
-
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -89,11 +89,6 @@ WSGI_APPLICATION = 'pos.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-# Database configuration - uses Railway's DATABASE_URL automatically
-# Database configuration for Railway / production
-import os
-import dj_database_url
-
 DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3'),  # fallback for local dev
@@ -101,6 +96,7 @@ DATABASES = {
         ssl_require=False                                             # Railway handles SSL
     )
 }
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -132,18 +128,17 @@ USE_I18N = True
 USE_TZ = True
 
 
-
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
+# Static files (CSS, JS, Images, manifest, sw.js, icons)
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # where collectstatic puts files
+STATICFILES_DIRS = [BASE_DIR / 'static']  # your source static folder
 
-# For production on Railway
+# Whitenoise for production static serving
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = 'media/'
+
+# Media files
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -195,7 +190,7 @@ MPESA_CALLBACK_URL = 'https://dollie-exosporous-ricardo.ngrok-free.dev/mpesa/cal
 
 SECURE_SSL_REDIRECT = False  # temporary - Railway handles HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
+"""
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -211,3 +206,4 @@ LOGGING = {
         },
     },
 }
+"""
